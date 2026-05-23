@@ -1,0 +1,6 @@
+{
+  "name": "The OVi Body Splash",
+  "description": "A beautiful landing page for The OVi Fruity & Lovely Body Splash with scroll animations.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

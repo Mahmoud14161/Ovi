@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <url>
+    <loc>https://www.ovibeauty.com/</loc>
+    <lastmod>2026-05-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="ar-eg" href="https://www.ovibeauty.com/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.ovibeauty.com/" />
+    <image:image>
+      <image:loc>https://www.ovibeauty.com/photos/farawla.png</image:loc>
+      <image:title>The OVi Body Splash - Strawberry &amp; Blueberry | بدي سبلاش فراولة وتوت أزرق</image:title>
+      <image:caption>The OVi Body Splash برائحة الفراولة والتوت الأزرق - أفضل معطر جسم في مصر</image:caption>
+    </image:image>
+  </url>
+</urlset>

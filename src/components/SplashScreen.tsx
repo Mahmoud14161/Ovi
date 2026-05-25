@@ -24,7 +24,7 @@ export default function SplashScreen({ onComplete }: { onComplete: () => void })
         className="relative h-[40vh] md:h-[50vh] flex flex-col items-center"
       >
         <motion.img 
-          src="https://drive.google.com/thumbnail?id=19quIeHlr7_axErTn6QDpQ0J6dTEyAKp2&sz=w1000"
+          src="/photos/farawla.png"
           className="h-full w-auto object-contain mix-blend-darken"
           alt="The OVi Loading"
           animate={{ y: [0, -15, 0] }}
@@ -45,7 +45,7 @@ export default function SplashScreen({ onComplete }: { onComplete: () => void })
         transition={{ delay: 0.8, duration: 1 }}
         className="mt-16 flex flex-col items-center"
       >
-        <h1 className="font-serif italic text-4xl text-brand-deep tracking-tighter">The OVi.</h1>
+        <h1 className="font-serif italic text-4xl text-brand-deep tracking-tighter">The OVi</h1>
         <div className="mt-6 w-32 md:w-48 h-[2px] bg-brand-border overflow-hidden">
           <motion.div 
             className="h-full bg-brand-deep"

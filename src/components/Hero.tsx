@@ -31,7 +31,7 @@ export default function Hero() {
           transition={{ duration: 1.2, delay: 0.2, ease: "easeOut" }}
           className="font-serif italic text-6xl md:text-8xl lg:text-9xl leading-none tracking-tighter text-brand-deep mb-6"
         >
-          The OVi.
+          The OVi
         </motion.h1>
         <motion.p 
           initial={{ opacity: 0, filter: 'blur(8px)', y: 20 }}
@@ -39,7 +39,7 @@ export default function Hero() {
           transition={{ duration: 1, delay: 0.4, ease: "easeOut" }}
           className="text-lg md:text-2xl text-brand-text/80 font-sans font-light tracking-wide uppercase mb-10"
         >
-          Fruity & Lovely
+          Fruity & Lovely • 250 ml
         </motion.p>
         <motion.button
           initial={{ opacity: 0, y: 20 }}
@@ -70,7 +70,7 @@ export default function Hero() {
           className="h-full w-full relative"
         >
           <img 
-            src="https://drive.google.com/thumbnail?id=19quIeHlr7_axErTn6QDpQ0J6dTEyAKp2&sz=w1000" 
+            src="/photos/farawla.png" 
             alt="The OVi Body Splash" 
             className="h-full w-auto object-contain mix-blend-darken"
             onError={(e) => {

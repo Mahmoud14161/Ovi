@@ -16,7 +16,7 @@ export default function CTASection({ onCheckout }: { onCheckout: () => void }) {
             Embrace the Freshness
           </h2>
           <p className="text-brand-text/70 mb-8 max-w-xl mx-auto font-light">
-            Order your bottle of The OVi now and revitalize your daily routine with a burst of fruity & lovely scent.
+            Order your bottle of The OVi (250 ml) now and revitalize your daily routine with a burst of fruity & lovely scent.
           </p>
           
           <div className="flex flex-col items-center justify-center mb-12">
@@ -24,7 +24,7 @@ export default function CTASection({ onCheckout }: { onCheckout: () => void }) {
               <span>EGP 350</span>
               <span className="text-xl md:text-2xl text-brand-text/40 line-through decoration-brand-accent3/50 decoration-2">EGP 510</span>
             </div>
-            <p className="text-sm text-brand-text/50 mt-2 font-light">+ EGP 35 Shipping Fee</p>
+            <p className="text-sm text-brand-text/50 mt-2 font-light">Size: 250 ml • + EGP 35 Shipping Fee</p>
           </div>
 
           <div className="relative inline-block">

@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, CheckCircle, Download, Loader2, Minus, Plus } from 'lucide-react';
 import html2canvas from 'html2canvas';
@@ -6,6 +6,146 @@ import { jsPDF } from 'jspdf';
 import { egyptLocations } from '../data/egyptLocations';
 
 type Step = 'form' | 'instapay' | 'success';
+
+function SuccessContent({
+  orderNumber, formData, quantity, subtotal, vat, shipping, appliedDiscount,
+  total, pdfUrl, isGeneratingPdf, handlePrint, invoiceRef, getFullAddress
+}: {
+  orderNumber: string;
+  formData: { name: string; phone: string; email: string; governorate: string; city: string; street: string };
+  quantity: number;
+  subtotal: number;
+  vat: number;
+  shipping: number;
+  appliedDiscount: number;
+  total: number;
+  pdfUrl: string | null;
+  isGeneratingPdf: boolean;
+  handlePrint: () => void;
+  invoiceRef: React.RefObject<HTMLDivElement>;
+  getFullAddress: () => string;
+}) {
+  // Auto-redirect to home after 4 seconds, replace history so back button also goes home
+  useEffect(() => {
+    // Push the current state and then replace so back goes to '/' not the order page
+    window.history.pushState(null, '', window.location.href);
+    const onPopState = () => {
+      window.location.replace('/');
+    };
+    window.addEventListener('popstate', onPopState);
+
+    const timer = setTimeout(() => {
+      window.location.replace('/');
+    }, 4000);
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('popstate', onPopState);
+    };
+  }, []);
+
+  return (
+    <>
+      <div className="text-center mb-8 hidden-print">
+        <div className="w-16 h-16 bg-brand-accent3/10 text-brand-accent3 rounded-full flex items-center justify-center mx-auto mb-4">
+          <CheckCircle className="w-8 h-8" />
+        </div>
+        <h2 className="text-3xl font-serif text-brand-deep mb-3">Order Received!</h2>
+        <p className="text-brand-text/80 font-light max-w-md mx-auto">
+          Thank you for your order. We have received your request and will contact you shortly to confirm the details.
+        </p>
+        <p className="text-sm text-brand-text/50 mt-3">
+          Redirecting to home in a few seconds...
+        </p>
+      </div>
+
+      {/* Printable Invoice Area */}
+      <div ref={invoiceRef} className="bg-white border border-brand-border p-8 printable-area">
+        <div className="flex justify-between items-start border-b border-brand-border pb-6 mb-6">
+          <div>
+            <h3 className="font-serif italic text-3xl text-brand-deep">The OVi</h3>
+            <p className="text-sm text-brand-text/60 mt-1">Proforma Invoice / Order Summary</p>
+          </div>
+          <div className="text-right">
+            <p className="font-medium text-brand-deep">{orderNumber}</p>
+            <p className="text-sm text-brand-text/60">{new Date().toLocaleDateString()}</p>
+          </div>
+        </div>
+
+        <div className="mb-8">
+          <h4 className="text-sm font-medium text-brand-text/50 uppercase tracking-widest mb-3">Bill To</h4>
+          <p className="font-medium text-brand-deep">{formData.name}</p>
+          <p className="text-brand-text/80">+20 {formData.phone}</p>
+          {formData.email && <p className="text-brand-text/80">{formData.email}</p>}
+          <p className="text-brand-text/80 mt-1">{getFullAddress()}</p>
+        </div>
+
+        <table className="w-full mb-8 text-left border-collapse">
+          <thead>
+            <tr className="border-b-2 border-brand-border">
+              <th className="py-3 text-sm font-medium text-brand-text/50 uppercase tracking-wider">Item</th>
+              <th className="py-3 text-sm font-medium text-brand-text/50 uppercase tracking-wider text-right">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr className="border-b border-brand-border">
+              <td className="py-4 text-brand-deep">The OVi (250 ml) - Strawberry & Blueberry (x{quantity})</td>
+              <td className="py-4 text-brand-deep text-right">EGP {subtotal}</td>
+            </tr>
+            {appliedDiscount > 0 && (
+              <tr className="border-b border-brand-border">
+                <td className="py-4 text-brand-accent3">Discount applied</td>
+                <td className="py-4 text-brand-accent3 text-right">- EGP {appliedDiscount}</td>
+              </tr>
+            )}
+            <tr className="border-b border-brand-border">
+              <td className="py-4 text-brand-text/70">VAT</td>
+              <td className="py-4 text-brand-text/70 text-right">EGP {vat}</td>
+            </tr>
+            <tr className="border-b border-brand-border">
+              <td className="py-4 text-brand-text/70">Shipping fee</td>
+              <td className="py-4 text-brand-text/70 text-right">{shipping === 0 ? 'Free' : `EGP ${shipping}`}</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td className="py-4 font-medium text-brand-deep text-lg">Total Amount</td>
+              <td className="py-4 font-medium text-brand-accent3 text-xl text-right">EGP {total}</td>
+            </tr>
+          </tfoot>
+        </table>
+
+        <div className="text-center text-sm text-brand-text/60 italic border-t border-brand-border pt-6">
+          This is a preliminary order summary and does not serve as a final receipt of payment.
+        </div>
+      </div>
+
+      <div className="mt-8 flex flex-col items-center gap-4 hidden-print">
+        {pdfUrl ? (
+          <a 
+            href={pdfUrl}
+            download={`OVi_Order_${orderNumber}.pdf`}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-2 bg-brand-deep text-white px-6 py-3 hover:bg-brand-text transition-colors font-medium shadow-sm"
+          >
+            <Download className="w-4 h-4" />
+            <span>Download PDF (Click here if it didn't start)</span>
+          </a>
+        ) : (
+          <button 
+            onClick={handlePrint}
+            disabled={isGeneratingPdf}
+            className="inline-flex items-center gap-2 bg-brand-surface border border-brand-border text-brand-deep px-6 py-3 hover:bg-brand-light transition-colors font-medium shadow-sm disabled:opacity-70 disabled:cursor-wait"
+          >
+            {isGeneratingPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+            <span>{isGeneratingPdf ? 'Generating PDF...' : 'Download / Print PDF'}</span>
+          </button>
+        )}
+      </div>
+    </>
+  );
+}
 
 export default function Checkout({ onBack }: { onBack: () => void }) {
   const [step, setStep] = useState<Step>('form');
@@ -34,6 +174,93 @@ export default function Checkout({ onBack }: { onBack: () => void }) {
   const vat = 0;
   const total = Math.max(0, subtotal + shipping + vat - appliedDiscount);
 
+  const hasTrackedPurchase = useRef(false);
+
+  // Track when checkout page is opened (InitiateCheckout / begin_checkout)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // 1. Google Analytics Direct Event
+      if ((window as any).gtag) {
+        (window as any).gtag('event', 'begin_checkout', {
+          currency: 'EGP',
+          value: total,
+          items: [{
+            item_id: 'OVI-BS-001',
+            item_name: 'The OVi Body Splash - Strawberry & Blueberry',
+            price: price,
+            quantity: quantity
+          }]
+        });
+      }
+
+      // 2. Meta Pixel Event
+      if ((window as any).fbq) {
+        (window as any).fbq('track', 'InitiateCheckout', {
+          content_ids: ['OVI-BS-001'],
+          content_type: 'product',
+          value: total,
+          currency: 'EGP'
+        });
+      }
+    }
+  }, []);
+
+  // Track when purchase is successful (Purchase / purchase / dataLayer push)
+  useEffect(() => {
+    if (step === 'success' && orderNumber && !hasTrackedPurchase.current) {
+      hasTrackedPurchase.current = true;
+      if (typeof window !== 'undefined') {
+        // 1. Google Analytics Direct Event
+        if ((window as any).gtag) {
+          (window as any).gtag('event', 'purchase', {
+            transaction_id: orderNumber,
+            value: total,
+            currency: 'EGP',
+            shipping: shipping,
+            tax: 0,
+            items: [{
+              item_id: 'OVI-BS-001',
+              item_name: 'The OVi Body Splash - Strawberry & Blueberry',
+              price: price,
+              quantity: quantity
+            }]
+          });
+        }
+
+        // 2. Google Tag Manager dataLayer
+        if ((window as any).dataLayer) {
+          (window as any).dataLayer.push({
+            event: 'purchase',
+            ecommerce: {
+              transaction_id: orderNumber,
+              value: total,
+              currency: 'EGP',
+              shipping: shipping,
+              tax: 0,
+              items: [{
+                item_id: 'OVI-BS-001',
+                item_name: 'The OVi Body Splash - Strawberry & Blueberry',
+                price: price,
+                quantity: quantity
+              }]
+            }
+          });
+        }
+
+        // 3. Meta Pixel Event
+        if ((window as any).fbq) {
+          (window as any).fbq('track', 'Purchase', {
+            content_ids: ['OVI-BS-001'],
+            content_type: 'product',
+            value: total,
+            currency: 'EGP',
+            num_items: quantity
+          });
+        }
+      }
+    }
+  }, [step, orderNumber, total, shipping, quantity]);
+
   const handleApplyDiscount = () => {
     if (!discountCode.trim()) return;
     const code = discountCode.trim().toUpperCase();
@@ -54,11 +281,49 @@ export default function Checkout({ onBack }: { onBack: () => void }) {
     return [formData.street, formData.city, formData.governorate].filter(Boolean).join(', ');
   };
 
-  const handleNext = () => {
-    // Generate order number
-    if (!orderNumber) {
-      setOrderNumber(`ORD-${Math.floor(Math.random() * 90000) + 10000}`);
+  const sendToSheet = async (generatedOrderNumber: string) => {
+    const sheetUrl = import.meta.env.VITE_GOOGLE_SHEET_URL;
+    if (!sheetUrl) return;
+
+    const orderData = {
+      orderNumber: generatedOrderNumber,
+      timestamp: new Date().toLocaleString('ar-EG', { timeZone: 'Africa/Cairo' }),
+      product: 'The OVi (250 ml) - Strawberry & Blueberry',
+      quantity: quantity,
+      name: formData.name,
+      phone: `+20${formData.phone}`,
+      governorate: formData.governorate,
+      city: formData.city,
+      street: formData.street,
+      fullAddress: getFullAddress(),
+      email: formData.email || '—',
+      paymentMethod: paymentMethod === 'instapay' ? 'Instapay' : 'Cash on Delivery',
+      discountCode: discountCode.trim().toUpperCase() || 'لا يوجد',
+      discountAmount: appliedDiscount,
+      total: total,
+      status: paymentMethod === 'cod' ? 'انتظار التأكيد (COD)' : 'انتظار التحويل (Instapay)',
+    };
+
+    try {
+      await fetch(sheetUrl, {
+        method: 'POST',
+        body: JSON.stringify(orderData),
+      });
+    } catch (err) {
+      console.error('Failed to save order to sheet:', err);
     }
+  };
+
+  const handleNext = async () => {
+    // Generate order number
+    let currentOrderNumber = orderNumber;
+    if (!currentOrderNumber) {
+      currentOrderNumber = `ORD-${Math.floor(Math.random() * 90000) + 10000}`;
+      setOrderNumber(currentOrderNumber);
+    }
+
+    // Send order data to Google Sheets
+    await sendToSheet(currentOrderNumber);
 
     if (paymentMethod === 'instapay') {
       setStep('instapay');
@@ -105,7 +370,7 @@ export default function Checkout({ onBack }: { onBack: () => void }) {
       doc.line(20, tableStartY + 12, 190, tableStartY + 12);
       
       doc.setFont("helvetica", "normal");
-      doc.text(`The OVi - Strawberry & Blueberry (x${quantity})`, 20, tableStartY + 22);
+      doc.text(`The OVi (250 ml) - Strawberry & Blueberry (x${quantity})`, 20, tableStartY + 22);
       doc.text(`EGP ${subtotal}`, 170, tableStartY + 22);
       
       let currentY = tableStartY + 30;
@@ -283,6 +548,7 @@ export default function Checkout({ onBack }: { onBack: () => void }) {
                         onChange={() => setPaymentMethod('instapay')}
                         className="w-4 h-4 text-brand-accent3 focus:ring-brand-accent3"
                       />
+                      <img src="/photos/instapay-logo.png" alt="Instapay" className="h-6 w-auto object-contain" />
                       <span className="font-medium text-brand-text">Instapay</span>
                     </label>
 
@@ -294,6 +560,7 @@ export default function Checkout({ onBack }: { onBack: () => void }) {
                         onChange={() => setPaymentMethod('cod')}
                         className="w-4 h-4 text-brand-accent3 focus:ring-brand-accent3"
                       />
+                      <img src="/photos/cod-logo.png" alt="Cash on Delivery" className="h-6 w-auto object-contain" />
                       <span className="font-medium text-brand-text">Cash on Delivery</span>
                     </label>
                   </div>
@@ -307,10 +574,10 @@ export default function Checkout({ onBack }: { onBack: () => void }) {
                   
                   <div className="flex items-center gap-4 mb-6">
                     <div className="w-16 h-16 bg-brand-light flex items-center justify-center p-2 border border-brand-border shrink-0">
-                       <img src="https://drive.google.com/thumbnail?id=19quIeHlr7_axErTn6QDpQ0J6dTEyAKp2&sz=w200" alt="The OVi" className="h-full w-full object-contain mix-blend-darken" />
+                       <img src="/photos/farawla.png" alt="The OVi" className="h-full w-full object-contain mix-blend-darken" />
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-medium text-brand-deep">The OVi</h3>
+                      <h3 className="font-medium text-brand-deep">The OVi (250 ml)</h3>
                       <p className="text-sm text-brand-text/70 mb-2">Strawberry & Blueberry</p>
                       <div className="flex items-center gap-3">
                         <button 
@@ -435,100 +702,21 @@ export default function Checkout({ onBack }: { onBack: () => void }) {
               animate={{ opacity: 1, scale: 1 }}
               className="max-w-2xl mx-auto"
             >
-              <div className="text-center mb-8 hidden-print">
-                <div className="w-16 h-16 bg-brand-accent3/10 text-brand-accent3 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <CheckCircle className="w-8 h-8" />
-                </div>
-                <h2 className="text-3xl font-serif text-brand-deep mb-3">Order Received!</h2>
-                <p className="text-brand-text/80 font-light max-w-md mx-auto">
-                  Thank you for your order. We have received your request and will contact you shortly to confirm the details.
-                </p>
-              </div>
-
-              {/* Printable Invoice Area */}
-              <div ref={invoiceRef} className="bg-white border border-brand-border p-8 printable-area">
-                <div className="flex justify-between items-start border-b border-brand-border pb-6 mb-6">
-                  <div>
-                    <h3 className="font-serif italic text-3xl text-brand-deep">The OVi</h3>
-                    <p className="text-sm text-brand-text/60 mt-1">Proforma Invoice / Order Summary</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-medium text-brand-deep">{orderNumber}</p>
-                    <p className="text-sm text-brand-text/60">{new Date().toLocaleDateString()}</p>
-                  </div>
-                </div>
-
-                <div className="mb-8">
-                  <h4 className="text-sm font-medium text-brand-text/50 uppercase tracking-widest mb-3">Bill To</h4>
-                  <p className="font-medium text-brand-deep">{formData.name}</p>
-                  <p className="text-brand-text/80">+20 {formData.phone}</p>
-                  {formData.email && <p className="text-brand-text/80">{formData.email}</p>}
-                  <p className="text-brand-text/80 mt-1">{getFullAddress()}</p>
-                </div>
-
-                <table className="w-full mb-8 text-left border-collapse">
-                  <thead>
-                    <tr className="border-b-2 border-brand-border">
-                      <th className="py-3 text-sm font-medium text-brand-text/50 uppercase tracking-wider">Item</th>
-                      <th className="py-3 text-sm font-medium text-brand-text/50 uppercase tracking-wider text-right">Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr className="border-b border-brand-border">
-                      <td className="py-4 text-brand-deep">The OVi - Strawberry & Blueberry (x{quantity})</td>
-                      <td className="py-4 text-brand-deep text-right">EGP {subtotal}</td>
-                    </tr>
-                    {appliedDiscount > 0 && (
-                      <tr className="border-b border-brand-border">
-                        <td className="py-4 text-brand-accent3">Discount applied</td>
-                        <td className="py-4 text-brand-accent3 text-right">- EGP {appliedDiscount}</td>
-                      </tr>
-                    )}
-                    <tr className="border-b border-brand-border">
-                      <td className="py-4 text-brand-text/70">VAT</td>
-                      <td className="py-4 text-brand-text/70 text-right">EGP {vat}</td>
-                    </tr>
-                    <tr className="border-b border-brand-border">
-                      <td className="py-4 text-brand-text/70">Shipping fee</td>
-                      <td className="py-4 text-brand-text/70 text-right">{shipping === 0 ? 'Free' : `EGP ${shipping}`}</td>
-                    </tr>
-                  </tbody>
-                  <tfoot>
-                    <tr>
-                      <td className="py-4 font-medium text-brand-deep text-lg">Total Amount</td>
-                      <td className="py-4 font-medium text-brand-accent3 text-xl text-right">EGP {total}</td>
-                    </tr>
-                  </tfoot>
-                </table>
-
-                <div className="text-center text-sm text-brand-text/60 italic border-t border-brand-border pt-6">
-                  This is a preliminary order summary and does not serve as a final receipt of payment.
-                </div>
-              </div>
-
-              <div className="mt-8 flex flex-col items-center gap-4 hidden-print">
-                {pdfUrl ? (
-                  <a 
-                    href={pdfUrl}
-                    download={`OVi_Order_${orderNumber}.pdf`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-2 bg-brand-deep text-white px-6 py-3 hover:bg-brand-text transition-colors font-medium shadow-sm"
-                  >
-                    <Download className="w-4 h-4" />
-                    <span>Download PDF (Click here if it didn't start)</span>
-                  </a>
-                ) : (
-                  <button 
-                    onClick={handlePrint}
-                    disabled={isGeneratingPdf}
-                    className="inline-flex items-center gap-2 bg-brand-surface border border-brand-border text-brand-deep px-6 py-3 hover:bg-brand-light transition-colors font-medium shadow-sm disabled:opacity-70 disabled:cursor-wait"
-                  >
-                    {isGeneratingPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                    <span>{isGeneratingPdf ? 'Generating PDF...' : 'Download / Print PDF'}</span>
-                  </button>
-                )}
-              </div>
+              <SuccessContent
+                orderNumber={orderNumber}
+                formData={formData}
+                quantity={quantity}
+                subtotal={subtotal}
+                vat={vat}
+                shipping={shipping}
+                appliedDiscount={appliedDiscount}
+                total={total}
+                pdfUrl={pdfUrl}
+                isGeneratingPdf={isGeneratingPdf}
+                handlePrint={handlePrint}
+                invoiceRef={invoiceRef}
+                getFullAddress={getFullAddress}
+              />
             </motion.div>
           )}
         </AnimatePresence>

@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo, useEffect } from 'react';
+// CI trigger commit
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, CheckCircle, Download, Loader2, Minus, Plus } from 'lucide-react';
 import html2canvas from 'html2canvas';

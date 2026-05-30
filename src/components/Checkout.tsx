@@ -287,7 +287,7 @@ export default function Checkout({ onBack, initialQuantity = 1 }: { onBack: () =
     } else if (code === 'OVI10') {
       setIsFreeShippingCode(false);
       setDiscountRate(0.1);
-    } else if (code === 'OVI%MARYAM2026' || code === 'OVI%HOSINY2026' || code === 'OVI%RAHMA2026') {
+    } else if (code === 'OVI%MARYAM2026' || code === 'OVI%HOSINY2026' || code === 'OVI%RAHMA2026' || code === 'OVI%2026') {
       setIsFreeShippingCode(false);
       setDiscountRate(0.15);
     } else {

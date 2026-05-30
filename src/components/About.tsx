@@ -62,7 +62,7 @@ export default function About() {
             A refreshing and <br className="hidden md:block" /> invigorating scent
           </h2>
           <p className="text-lg md:text-xl text-brand-text/80 font-light leading-relaxed max-w-3xl mx-auto">
-            Introducing our exquisite <strong className="text-brand-deep font-semibold">The OVi (250 ml)</strong> body splash, the perfect fragrance companion for those seeking a refreshing and invigorating scent experience. Our body splash is meticulously crafted to captivate your senses and leave you feeling revitalized throughout the day.
+            Introducing our exquisite <strong className="text-brand-deep font-semibold">The OVi (250 ml)</strong> body splash, with the refreshing and natural scent of Strawberry & Blueberry. The perfect fragrance companion for those seeking a refreshing and invigorating scent experience. Our body splash is meticulously crafted to captivate your senses and leave you feeling revitalized throughout the day.
           </p>
         </motion.div>
       </div>

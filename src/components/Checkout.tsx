@@ -1,6 +1,7 @@
 // CI trigger commit
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, CheckCircle, Download, Loader2, Minus, Plus } from 'lucide-react';
+import { ArrowLeft, CheckCircle, CreditCard, Download, Loader2, Minus, Plus } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { egyptLocations } from '../data/egyptLocations';
@@ -25,10 +26,12 @@ function SuccessContent({
   invoiceRef: React.RefObject<HTMLDivElement>;
   getFullAddress: () => string;
 }) {
-  // Auto-redirect to home after 4 seconds, replace history so back button also goes home
+  // Auto-redirect to home after 5 seconds, replace history so back button also goes home
   useEffect(() => {
-    // Push the current state and then replace so back goes to '/' not the order page
-    window.history.pushState(null, '', window.location.href);
+    // Replace current state in history with '/' (home) so this page isn't in history
+    window.history.replaceState(null, '', '/');
+    // Also push a state so back button stays on '/'
+    window.history.pushState(null, '', '/');
     const onPopState = () => {
       window.location.replace('/');
     };
@@ -36,7 +39,7 @@ function SuccessContent({
 
     const timer = setTimeout(() => {
       window.location.replace('/');
-    }, 4000);
+    }, 5000);
 
     return () => {
       clearTimeout(timer);
@@ -55,7 +58,7 @@ function SuccessContent({
           Thank you for your order. We have received your request and will contact you shortly to confirm the details.
         </p>
         <p className="text-sm text-brand-text/50 mt-3">
-          Redirecting to home in a few seconds...
+          سيتم تحويلك تلقائياً للصفحة الرئيسية خلال 5 ثوانٍ...
         </p>
       </div>
 
@@ -147,7 +150,7 @@ function SuccessContent({
   );
 }
 
-export default function Checkout({ onBack }: { onBack: () => void }) {
+export default function Checkout({ onBack, initialQuantity = 1 }: { onBack: () => void; initialQuantity?: number }) {
   const [step, setStep] = useState<Step>('form');
   const [formData, setFormData] = useState({
     name: '',
@@ -159,16 +162,30 @@ export default function Checkout({ onBack }: { onBack: () => void }) {
   });
   const [paymentMethod, setPaymentMethod] = useState<'instapay' | 'cod'>('instapay');
   const [orderNumber, setOrderNumber] = useState('');
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setQuantity] = useState(initialQuantity);
   const [discountCode, setDiscountCode] = useState('');
-  const [appliedDiscount, setAppliedDiscount] = useState(0);
+  const [discountRate, setDiscountRate] = useState(0);
   const [isFreeShippingCode, setIsFreeShippingCode] = useState(false);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const invoiceRef = useRef<HTMLDivElement>(null);
 
   const price = 350;
-  const subtotal = price * quantity;
+  
+  // Calculate dynamic bundle price
+  let subtotal = 350;
+  if (quantity === 1) {
+    subtotal = 350;
+  } else if (quantity === 2) {
+    subtotal = 580;
+  } else if (quantity === 3) {
+    subtotal = 810;
+  } else if (quantity > 3) {
+    subtotal = 810 + (quantity - 3) * 270;
+  }
+
+  const appliedDiscount = Math.round(subtotal * discountRate);
+
   const isFreeGov = ['Cairo', 'Giza', 'Qalyubia'].includes(formData.governorate);
   const shipping = (isFreeGov || isFreeShippingCode) ? 0 : 35;
   const vat = 0;
@@ -266,13 +283,16 @@ export default function Checkout({ onBack }: { onBack: () => void }) {
     const code = discountCode.trim().toUpperCase();
     if (code === 'OVI2026FREE') {
       setIsFreeShippingCode(true);
-      setAppliedDiscount(0);
+      setDiscountRate(0);
     } else if (code === 'OVI10') {
       setIsFreeShippingCode(false);
-      setAppliedDiscount(subtotal * 0.1);
+      setDiscountRate(0.1);
+    } else if (code === 'OVI%MARYAM2026' || code === 'OVI%HOSINY2026' || code === 'OVI%RAHMA2026') {
+      setIsFreeShippingCode(false);
+      setDiscountRate(0.15);
     } else {
       setIsFreeShippingCode(false);
-      setAppliedDiscount(0); // Invalid code
+      setDiscountRate(0); // Invalid code
       alert("Invalid discount code");
     }
   };
@@ -538,7 +558,7 @@ export default function Checkout({ onBack }: { onBack: () => void }) {
                 </div>
 
                 <div>
-                  <h2 className="text-xl font-medium text-brand-deep border-b border-brand-border pb-2 mb-4">Payment Method</h2>
+                  <h2 className="text-xl font-medium text-brand-deep border-b border-brand-border pb-2 mb-4">طريقة الدفع (Payment Method)</h2>
                   <div className="space-y-3">
                     <label className={`flex items-center gap-3 p-4 border cursor-pointer transition-colors ${paymentMethod === 'instapay' ? 'border-brand-accent3 bg-brand-accent1/20' : 'border-brand-border bg-white'}`}>
                       <input 
@@ -549,7 +569,7 @@ export default function Checkout({ onBack }: { onBack: () => void }) {
                         className="w-4 h-4 text-brand-accent3 focus:ring-brand-accent3"
                       />
                       <img src="/photos/instapay-logo.png" alt="Instapay" className="h-6 w-auto object-contain" />
-                      <span className="font-medium text-brand-text">Instapay</span>
+                      <span className="font-medium text-brand-text">انستاباي (Instapay)</span>
                     </label>
 
                     <label className={`flex items-center gap-3 p-4 border cursor-pointer transition-colors ${paymentMethod === 'cod' ? 'border-brand-accent3 bg-brand-accent1/20' : 'border-brand-border bg-white'}`}>
@@ -561,7 +581,18 @@ export default function Checkout({ onBack }: { onBack: () => void }) {
                         className="w-4 h-4 text-brand-accent3 focus:ring-brand-accent3"
                       />
                       <img src="/photos/cod-logo.png" alt="Cash on Delivery" className="h-6 w-auto object-contain" />
-                      <span className="font-medium text-brand-text">Cash on Delivery</span>
+                      <span className="font-medium text-brand-text">الدفع عند الاستلام (Cash on Delivery)</span>
+                    </label>
+
+                    <label className="flex items-center gap-3 p-4 border border-brand-border bg-gray-50/50 opacity-60 cursor-not-allowed">
+                      <input 
+                        type="radio" 
+                        name="payment" 
+                        disabled
+                        className="w-4 h-4 text-brand-text/40 focus:ring-brand-text/40 cursor-not-allowed"
+                      />
+                      <CreditCard className="w-5 h-5 text-brand-text/60" />
+                      <span className="font-medium text-brand-text/60">الفيزا والبطاقات البنكية (Soon)</span>
                     </label>
                   </div>
                 </div>

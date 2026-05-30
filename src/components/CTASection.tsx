@@ -24,7 +24,7 @@ export default function CTASection({ onCheckout }: { onCheckout: () => void }) {
               <span>EGP 350</span>
               <span className="text-xl md:text-2xl text-brand-text/40 line-through decoration-brand-accent3/50 decoration-2">EGP 510</span>
             </div>
-            <p className="text-sm text-brand-text/50 mt-2 font-light">Size: 250 ml • + EGP 35 Shipping Fee</p>
+            <p className="text-sm text-brand-text/50 mt-2 font-light">Size: 250 ml</p>
           </div>
 
           <div className="relative inline-block">

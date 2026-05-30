@@ -4,8 +4,9 @@
  */
 
 import { useState, useEffect } from 'react';
-import { AnimatePresence } from 'motion/react';
+import { AnimatePresence, motion } from 'motion/react';
 import Hero from './components/Hero';
+import Offers from './components/Offers';
 import About from './components/About';
 import Usage from './components/Usage';
 import Ingredients from './components/Ingredients';
@@ -40,6 +41,8 @@ export default function App() {
     }
     return false;
   });
+  const [checkoutQuantity, setCheckoutQuantity] = useState(1);
+
 
   useEffect(() => {
     const handlePopState = () => {
@@ -62,7 +65,8 @@ export default function App() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  const handleCheckoutOpen = () => {
+  const handleCheckoutOpen = (qty: number = 1) => {
+    setCheckoutQuantity(qty);
     window.history.pushState({}, '', '/checkout');
     setIsCheckout(true);
     setIsPolicies(false);
@@ -87,15 +91,29 @@ export default function App() {
         <FallingBerries />
         <BackgroundMusic />
         <Hero />
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+        >
+          <Offers onCheckout={handleCheckoutOpen} />
+        </motion.div>
         <About />
         <Usage />
         <Ingredients />
         <Precautions />
-        <CTASection onCheckout={handleCheckoutOpen} />
+        <CTASection onCheckout={() => handleCheckoutOpen(1)} />
         <Footer />
       </main>
+
       <AnimatePresence>
-        {isCheckout && <Checkout onBack={handleCheckoutClose} />}
+        {isCheckout && (
+          <Checkout 
+            onBack={handleCheckoutClose} 
+            initialQuantity={checkoutQuantity} 
+          />
+        )}
       </AnimatePresence>
     </>
   );

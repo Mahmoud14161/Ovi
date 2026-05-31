@@ -132,8 +132,21 @@ export default function Offers({ onCheckout }: OffersProps) {
             <h3>1 Bottle</h3>
             <p className="price-new">EGP 350</p>
             <p className="price-old">EGP 510</p>
-            <div style={{ display: 'flex', alignItems: 'center', color: '#28a745', marginTop: '4px', justifyContent: 'center' }}>
-              <img src="/photos/free.png" alt="Free shipping" style={{ width: 16, height: 16, marginRight: 4 }} />
+            <div style={{ display: 'flex', alignItems: 'center', color: '#28a745', marginTop: '4px', justifyContent: 'center', fontWeight: '600' }}>
+              <div style={{ 
+                width: 18, 
+                height: 18, 
+                marginRight: 6, 
+                backgroundColor: 'currentColor', 
+                WebkitMaskImage: 'url(/photos/free.png)',
+                WebkitMaskSize: 'contain',
+                WebkitMaskRepeat: 'no-repeat',
+                WebkitMaskPosition: 'center',
+                maskImage: 'url(/photos/free.png)',
+                maskSize: 'contain',
+                maskRepeat: 'no-repeat',
+                maskPosition: 'center'
+              }}></div>
               <span>Free Shipping</span>
             </div>
           </div>
@@ -158,8 +171,21 @@ export default function Offers({ onCheckout }: OffersProps) {
             <h3>2 Bottles</h3>
             <p className="price-new">EGP 580</p>
             <p className="price-old">EGP 1020</p>
-            <div style={{ display: 'flex', alignItems: 'center', color: '#28a745', marginTop: '4px', justifyContent: 'center' }}>
-              <img src="/photos/free.png" alt="Free shipping" style={{ width: 16, height: 16, marginRight: 4 }} />
+            <div style={{ display: 'flex', alignItems: 'center', color: '#28a745', marginTop: '4px', justifyContent: 'center', fontWeight: '600' }}>
+              <div style={{ 
+                width: 18, 
+                height: 18, 
+                marginRight: 6, 
+                backgroundColor: 'currentColor', 
+                WebkitMaskImage: 'url(/photos/free.png)',
+                WebkitMaskSize: 'contain',
+                WebkitMaskRepeat: 'no-repeat',
+                WebkitMaskPosition: 'center',
+                maskImage: 'url(/photos/free.png)',
+                maskSize: 'contain',
+                maskRepeat: 'no-repeat',
+                maskPosition: 'center'
+              }}></div>
               <span>Free Shipping</span>
             </div>
           </div>
@@ -187,8 +213,21 @@ export default function Offers({ onCheckout }: OffersProps) {
             <h3>3 Bottles</h3>
             <p className="price-new">EGP 810</p>
             <p className="price-old">EGP 1530</p>
-            <div style={{ display: 'flex', alignItems: 'center', color: '#28a745', marginTop: '4px', justifyContent: 'center' }}>
-              <img src="/photos/free.png" alt="Free shipping" style={{ width: 16, height: 16, marginRight: 4 }} />
+            <div style={{ display: 'flex', alignItems: 'center', color: '#28a745', marginTop: '4px', justifyContent: 'center', fontWeight: '600' }}>
+              <div style={{ 
+                width: 18, 
+                height: 18, 
+                marginRight: 6, 
+                backgroundColor: 'currentColor', 
+                WebkitMaskImage: 'url(/photos/free.png)',
+                WebkitMaskSize: 'contain',
+                WebkitMaskRepeat: 'no-repeat',
+                WebkitMaskPosition: 'center',
+                maskImage: 'url(/photos/free.png)',
+                maskSize: 'contain',
+                maskRepeat: 'no-repeat',
+                maskPosition: 'center'
+              }}></div>
               <span>Free Shipping</span>
             </div>
           </div>

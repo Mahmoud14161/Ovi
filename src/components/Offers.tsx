@@ -56,19 +56,31 @@ export default function Offers({ onCheckout }: OffersProps) {
         }
         .best-value {
           border: 2px solid #5b3146;
+          padding-top: 35px;
+          transform: scale(1.02);
+          box-shadow: 0 8px 25px rgba(91,49,70,0.15);
+          overflow: visible !important;
+        }
+        .best-value:hover {
+          transform: scale(1.05) translateY(-5px);
+          box-shadow: 0 12px 30px rgba(91,49,70,0.2);
         }
         .badge {
-          background: #5b3146;
+          background: linear-gradient(135deg, #5b3146, #7a425e);
           color: #fff;
-          padding: 5px 15px;
+          padding: 6px 16px;
           border-radius: 20px;
-          font-size: 14px;
+          font-family: inherit;
+          font-size: 13px;
           position: absolute;
           top: -15px;
           left: 50%;
           transform: translateX(-50%);
           white-space: nowrap;
-          font-weight: bold;
+          font-weight: 600;
+          letter-spacing: 0.5px;
+          z-index: 10;
+          box-shadow: 0 4px 12px rgba(91,49,70,0.3);
         }
         .price-new {
           font-size: 28px;
@@ -120,6 +132,10 @@ export default function Offers({ onCheckout }: OffersProps) {
             <h3>1 Bottle</h3>
             <p className="price-new">EGP 350</p>
             <p className="price-old">EGP 510</p>
+            <div style={{ display: 'flex', alignItems: 'center', color: '#28a745', marginTop: '4px', justifyContent: 'center' }}>
+              <img src="/photos/free.png" alt="Free shipping" style={{ width: 16, height: 16, marginRight: 4 }} />
+              <span>Free Shipping</span>
+            </div>
           </div>
           <button onClick={() => onCheckout(1)} className="btn-order">Order Now</button>
         </div>
@@ -142,6 +158,10 @@ export default function Offers({ onCheckout }: OffersProps) {
             <h3>2 Bottles</h3>
             <p className="price-new">EGP 580</p>
             <p className="price-old">EGP 1020</p>
+            <div style={{ display: 'flex', alignItems: 'center', color: '#28a745', marginTop: '4px', justifyContent: 'center' }}>
+              <img src="/photos/free.png" alt="Free shipping" style={{ width: 16, height: 16, marginRight: 4 }} />
+              <span>Free Shipping</span>
+            </div>
           </div>
           <button onClick={() => onCheckout(2)} className="btn-order">Order Now</button>
         </div>
@@ -167,6 +187,10 @@ export default function Offers({ onCheckout }: OffersProps) {
             <h3>3 Bottles</h3>
             <p className="price-new">EGP 810</p>
             <p className="price-old">EGP 1530</p>
+            <div style={{ display: 'flex', alignItems: 'center', color: '#28a745', marginTop: '4px', justifyContent: 'center' }}>
+              <img src="/photos/free.png" alt="Free shipping" style={{ width: 16, height: 16, marginRight: 4 }} />
+              <span>Free Shipping</span>
+            </div>
           </div>
           <button onClick={() => onCheckout(3)} className="btn-order">Order Now</button>
         </div>

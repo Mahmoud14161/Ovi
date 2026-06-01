@@ -327,6 +327,7 @@ export default function Checkout({ onBack, initialQuantity = 1 }: { onBack: () =
     try {
       await fetch(sheetUrl, {
         method: 'POST',
+        mode: 'no-cors',
         body: JSON.stringify(orderData),
       });
     } catch (err) {

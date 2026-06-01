@@ -333,6 +333,47 @@ export default function Checkout({ onBack, initialQuantity = 1 }: { onBack: () =
     } catch (err) {
       console.error('Failed to save order to sheet:', err);
     }
+
+    // Telegram Notification
+    try {
+      const botToken = import.meta.env.VITE_TELEGRAM_BOT_TOKEN;
+      const chatId = import.meta.env.VITE_TELEGRAM_CHAT_ID;
+      if (botToken && chatId) {
+        const emoji = paymentMethod === 'cod' ? '💵' : '💳';
+        const lines = [
+          '🛍️ *طلب جديد - OVi*',
+          '━━━━━━━━━━━━━━━━',
+          `📦 *رقم الطلب:* \`${generatedOrderNumber}\``,
+          `🕐 *الوقت:* ${orderData.timestamp}`,
+          '',
+          `👤 *العميل:* ${orderData.name}`,
+          `📞 *الهاتف:* ${orderData.phone}`,
+          `📍 *العنوان:* ${orderData.fullAddress}`,
+          `📧 *الإيميل:* ${orderData.email}`,
+          '',
+          `🛒 *المنتج:* ${orderData.product}`,
+          `🔢 *الكمية:* ${orderData.quantity}`,
+          `${emoji} *الدفع:* ${orderData.paymentMethod}`,
+          `🏷️ *كود الخصم:* ${orderData.discountCode}`,
+          `💰 *الخصم:* ${orderData.discountAmount} EGP`,
+          `💵 *الإجمالي:* *${orderData.total} EGP*`,
+          '',
+          `📊 *الحالة:* ${orderData.status}`,
+          '━━━━━━━━━━━━━━━━',
+        ];
+        await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text: lines.join('\n'),
+            parse_mode: 'Markdown',
+          }),
+        });
+      }
+    } catch (err) {
+      console.error('Failed to send Telegram notification:', err);
+    }
   };
 
   const handleNext = async () => {

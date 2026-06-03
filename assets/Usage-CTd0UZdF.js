@@ -1,0 +1,11 @@
+import{j as e,m as i}from"./index-IjNUtre7.js";import{c as s}from"./createLucideIcon-BI5yxAik.js";/**
+ * @license lucide-react v0.546.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const n=[["path",{d:"M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7.29 6.75 7 5.3c-.29 1.45-1.14 2.84-2.29 3.76S3 11.1 3 12.25c0 2.22 1.8 4.05 4 4.05z",key:"1ptgy4"}],["path",{d:"M12.56 6.6A10.97 10.97 0 0 0 14 3.02c.5 2.5 2 4.9 4 6.5s3 3.5 3 5.5a6.98 6.98 0 0 1-11.91 4.97",key:"1sl1rz"}]],c=s("droplets",n);/**
+ * @license lucide-react v0.546.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const o=[["path",{d:"M12.8 19.6A2 2 0 1 0 14 16H2",key:"148xed"}],["path",{d:"M17.5 8a2.5 2.5 0 1 1 2 4H2",key:"1u4tom"}],["path",{d:"M9.8 4.4A2 2 0 1 1 11 8H2",key:"75valh"}]],d=s("wind",o);function h(){const r=[{icon:e.jsx(c,{className:"w-8 h-8 text-brand-accent2"}),title:"Cleanse",description:"Start with clean, dry skin after a shower or bath."},{icon:e.jsx(d,{className:"w-8 h-8 text-brand-accent2"}),title:"Apply",description:"Hold the bottle 15-10 centimeters away and spray a light mist."}];return e.jsx("section",{className:"py-24 bg-brand-light relative overflow-hidden",children:e.jsxs("div",{className:"max-w-6xl mx-auto px-6 md:px-12 relative z-10",children:[e.jsx("div",{className:"text-center mb-16",children:e.jsx(i.h2,{initial:{opacity:0,y:20},whileInView:{opacity:1,y:0},viewport:{once:!0},className:"font-serif italic text-4xl text-brand-deep",children:"How to Use"})}),e.jsx("div",{className:"grid md:grid-cols-2 gap-12 max-w-4xl mx-auto",children:r.map((t,a)=>e.jsxs(i.div,{initial:{opacity:0,y:30},whileInView:{opacity:1,y:0},viewport:{once:!0},transition:{delay:a*.2,duration:.6},className:"bg-brand-surface p-10 rounded-3xl border border-brand-border hover:bg-brand-light transition-colors",children:[e.jsx("div",{className:"w-16 h-16 bg-brand-accent1/50 rounded-full flex items-center justify-center mb-6",children:t.icon}),e.jsx("h3",{className:"text-2xl font-serif text-brand-deep mb-3",children:t.title}),e.jsx("p",{className:"text-brand-text/70 font-light leading-relaxed",children:t.description})]},a))})]})})}export{h as default};

@@ -3,21 +3,22 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import Hero from './components/Hero';
 import Offers from './components/Offers';
-import About from './components/About';
-import Usage from './components/Usage';
-import Ingredients from './components/Ingredients';
-import Precautions from './components/Precautions';
 import FallingBerries from './components/FallingBerries';
 import SplashScreen from './components/SplashScreen';
-import CTASection from './components/CTASection';
-import Checkout from './components/Checkout';
-import Footer from './components/Footer';
-import Policies from './components/Policies';
-import BackgroundMusic from './components/BackgroundMusic';
+
+const About = lazy(() => import('./components/About'));
+const Usage = lazy(() => import('./components/Usage'));
+const Ingredients = lazy(() => import('./components/Ingredients'));
+const Precautions = lazy(() => import('./components/Precautions'));
+const CTASection = lazy(() => import('./components/CTASection'));
+const Checkout = lazy(() => import('./components/Checkout'));
+const Footer = lazy(() => import('./components/Footer'));
+const Policies = lazy(() => import('./components/Policies'));
+const FAQ = lazy(() => import('./components/FAQ'));
 
 export default function App() {
   const [showSplash, setShowSplash] = useState(() => {
@@ -41,7 +42,15 @@ export default function App() {
     }
     return false;
   });
+  const [isFAQ, setIsFAQ] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const path = window.location.pathname.toLowerCase();
+      return path === '/faq' || path === '/faq/';
+    }
+    return false;
+  });
   const [checkoutQuantity, setCheckoutQuantity] = useState(1);
+  const [checkoutProduct, setCheckoutProduct] = useState<'strawberry' | 'oud'>('strawberry');
 
 
   useEffect(() => {
@@ -50,14 +59,22 @@ export default function App() {
       if (path === '/checkout' || path === '/checkout/') {
         setIsCheckout(true);
         setIsPolicies(false);
+        setIsFAQ(false);
         setShowSplash(false);
       } else if (path === '/policies' || path === '/policies/') {
         setIsPolicies(true);
+        setIsCheckout(false);
+        setIsFAQ(false);
+        setShowSplash(false);
+      } else if (path === '/faq' || path === '/faq/') {
+        setIsFAQ(true);
+        setIsPolicies(false);
         setIsCheckout(false);
         setShowSplash(false);
       } else {
         setIsCheckout(false);
         setIsPolicies(false);
+        setIsFAQ(false);
       }
     };
 
@@ -65,8 +82,9 @@ export default function App() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  const handleCheckoutOpen = (qty: number = 1) => {
+  const handleCheckoutOpen = (qty: number = 1, product: 'strawberry' | 'oud' = 'strawberry') => {
     setCheckoutQuantity(qty);
+    setCheckoutProduct(product);
     window.history.pushState({}, '', '/checkout');
     setIsCheckout(true);
     setIsPolicies(false);
@@ -76,10 +94,23 @@ export default function App() {
     window.history.pushState({}, '', '/');
     setIsCheckout(false);
     setIsPolicies(false);
+    setIsFAQ(false);
   };
 
+  if (isFAQ) {
+    return (
+      <Suspense fallback={<div className="h-screen bg-brand-light flex items-center justify-center text-brand-deep">Loading...</div>}>
+        <FAQ />
+      </Suspense>
+    );
+  }
+
   if (isPolicies) {
-    return <Policies />;
+    return (
+      <Suspense fallback={<div className="h-screen bg-brand-light flex items-center justify-center text-brand-deep">Loading...</div>}>
+        <Policies />
+      </Suspense>
+    );
   }
 
   return (
@@ -89,7 +120,6 @@ export default function App() {
       </AnimatePresence>
       <main className={`font-sans antialiased text-gray-900 bg-brand-light relative ${(showSplash || isCheckout) ? 'h-screen overflow-hidden' : ''}`}>
         <FallingBerries />
-        <BackgroundMusic />
         <Hero />
         <motion.div
           initial={{ opacity: 0, y: 50 }}
@@ -99,20 +129,25 @@ export default function App() {
         >
           <Offers onCheckout={handleCheckoutOpen} />
         </motion.div>
-        <About />
-        <Usage />
-        <Ingredients />
-        <Precautions />
-        <CTASection onCheckout={() => handleCheckoutOpen(1)} />
-        <Footer />
+        <Suspense fallback={<div className="py-20 flex justify-center text-brand-deep">Loading...</div>}>
+          <About />
+          <Usage />
+          <Ingredients />
+          <Precautions />
+          <CTASection onCheckout={() => handleCheckoutOpen(1, 'strawberry')} />
+          <Footer />
+        </Suspense>
       </main>
 
       <AnimatePresence>
         {isCheckout && (
-          <Checkout 
-            onBack={handleCheckoutClose} 
-            initialQuantity={checkoutQuantity} 
-          />
+          <Suspense fallback={<div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-light/90">Loading checkout...</div>}>
+            <Checkout 
+              onBack={handleCheckoutClose} 
+              initialQuantity={checkoutQuantity} 
+              initialProduct={checkoutProduct}
+            />
+          </Suspense>
         )}
       </AnimatePresence>
     </>

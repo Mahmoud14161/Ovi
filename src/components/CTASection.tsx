@@ -22,7 +22,7 @@ export default function CTASection({ onCheckout }: { onCheckout: () => void }) {
           <div className="flex flex-col items-center justify-center mb-12">
             <div className="flex items-center gap-4 text-3xl md:text-5xl font-serif text-brand-deep">
               <span>EGP 350</span>
-              <span className="text-xl md:text-2xl text-brand-text/40 line-through decoration-brand-accent3/50 decoration-2">EGP 510</span>
+              <span className="text-xl md:text-2xl text-brand-text/70 line-through decoration-brand-accent3/50 decoration-2">EGP 510</span>
             </div>
             <p className="text-sm text-brand-text/50 mt-2 font-light">Size: 250 ml</p>
           </div>

@@ -150,7 +150,7 @@ function SuccessContent({
   );
 }
 
-export default function Checkout({ onBack, initialQuantity = 1 }: { onBack: () => void; initialQuantity?: number }) {
+export default function Checkout({ onBack, initialQuantity = 1, initialProduct = 'strawberry' }: { onBack: () => void; initialQuantity?: number, initialProduct?: 'strawberry' | 'oud' }) {
   const [step, setStep] = useState<Step>('form');
   const [formData, setFormData] = useState({
     name: '',
@@ -163,6 +163,7 @@ export default function Checkout({ onBack, initialQuantity = 1 }: { onBack: () =
   const [paymentMethod, setPaymentMethod] = useState<'instapay' | 'cod'>('instapay');
   const [orderNumber, setOrderNumber] = useState('');
   const [quantity, setQuantity] = useState(initialQuantity);
+  const [productType, setProductType] = useState<'strawberry' | 'oud'>(initialProduct);
   const [discountCode, setDiscountCode] = useState('');
   const [discountRate, setDiscountRate] = useState(0);
   const [isFreeShippingCode, setIsFreeShippingCode] = useState(false);
@@ -170,18 +171,31 @@ export default function Checkout({ onBack, initialQuantity = 1 }: { onBack: () =
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const invoiceRef = useRef<HTMLDivElement>(null);
 
-  const price = 350;
+  const price = productType === 'oud' ? 450 : 350;
   
   // Calculate dynamic bundle price
-  let subtotal = 350;
-  if (quantity === 1) {
-    subtotal = 350;
-  } else if (quantity === 2) {
-    subtotal = 580;
-  } else if (quantity === 3) {
-    subtotal = 810;
-  } else if (quantity > 3) {
-    subtotal = 810 + (quantity - 3) * 270;
+  let subtotal = price;
+  if (productType === 'strawberry') {
+    if (quantity === 1) {
+      subtotal = 350;
+    } else if (quantity === 2) {
+      subtotal = 580; // Assuming this legacy value is kept
+    } else if (quantity === 3) {
+      subtotal = 810;
+    } else if (quantity > 3) {
+      subtotal = 810 + (quantity - 3) * 270;
+    }
+  } else {
+    // Oud
+    if (quantity === 1) {
+      subtotal = 450;
+    } else if (quantity === 2) {
+      subtotal = 850;
+    } else if (quantity === 3) {
+      subtotal = 1230;
+    } else if (quantity > 3) {
+      subtotal = 1230 + (quantity - 3) * 410; // Approximate per bottle price
+    }
   }
 
   const appliedDiscount = Math.round(subtotal * discountRate);
@@ -202,8 +216,8 @@ export default function Checkout({ onBack, initialQuantity = 1 }: { onBack: () =
           currency: 'EGP',
           value: total,
           items: [{
-            item_id: 'OVI-BS-001',
-            item_name: 'The OVi Body Splash - Strawberry & Blueberry',
+            item_id: productType === 'oud' ? 'OVI-BS-002' : 'OVI-BS-001',
+            item_name: productType === 'oud' ? 'The OVi Body Splash - OUD & Coconut' : 'The OVi Body Splash - Strawberry & Blueberry',
             price: price,
             quantity: quantity
           }]
@@ -213,7 +227,7 @@ export default function Checkout({ onBack, initialQuantity = 1 }: { onBack: () =
       // 2. Meta Pixel Event
       if ((window as any).fbq) {
         (window as any).fbq('track', 'InitiateCheckout', {
-          content_ids: ['OVI-BS-001'],
+          content_ids: [productType === 'oud' ? 'OVI-BS-002' : 'OVI-BS-001'],
           content_type: 'product',
           value: total,
           currency: 'EGP'
@@ -236,8 +250,8 @@ export default function Checkout({ onBack, initialQuantity = 1 }: { onBack: () =
             shipping: shipping,
             tax: 0,
             items: [{
-              item_id: 'OVI-BS-001',
-              item_name: 'The OVi Body Splash - Strawberry & Blueberry',
+              item_id: productType === 'oud' ? 'OVI-BS-002' : 'OVI-BS-001',
+              item_name: productType === 'oud' ? 'The OVi Body Splash - OUD & Coconut' : 'The OVi Body Splash - Strawberry & Blueberry',
               price: price,
               quantity: quantity
             }]
@@ -255,8 +269,8 @@ export default function Checkout({ onBack, initialQuantity = 1 }: { onBack: () =
               shipping: shipping,
               tax: 0,
               items: [{
-                item_id: 'OVI-BS-001',
-                item_name: 'The OVi Body Splash - Strawberry & Blueberry',
+                item_id: productType === 'oud' ? 'OVI-BS-002' : 'OVI-BS-001',
+                item_name: productType === 'oud' ? 'The OVi Body Splash - OUD & Coconut' : 'The OVi Body Splash - Strawberry & Blueberry',
                 price: price,
                 quantity: quantity
               }]
@@ -267,7 +281,7 @@ export default function Checkout({ onBack, initialQuantity = 1 }: { onBack: () =
         // 3. Meta Pixel Event
         if ((window as any).fbq) {
           (window as any).fbq('track', 'Purchase', {
-            content_ids: ['OVI-BS-001'],
+            content_ids: [productType === 'oud' ? 'OVI-BS-002' : 'OVI-BS-001'],
             content_type: 'product',
             value: total,
             currency: 'EGP',
@@ -287,7 +301,7 @@ export default function Checkout({ onBack, initialQuantity = 1 }: { onBack: () =
     } else if (code === 'OVI10') {
       setIsFreeShippingCode(false);
       setDiscountRate(0.1);
-    } else if (code === 'OVI%MARYAM2026' || code === 'OVI%HOSINY2026' || code === 'OVI%RAHMA2026' || code === 'OVI%2026') {
+    } else if (code === 'OVI%MARYAM2026' || code === 'OVI%HOSINY2026' || code === 'OVI%RAHMA2026' || code === 'OVI%2026' || code === 'OVI%HEBATURKI') {
       setIsFreeShippingCode(false);
       setDiscountRate(0.15);
     } else {
@@ -308,7 +322,7 @@ export default function Checkout({ onBack, initialQuantity = 1 }: { onBack: () =
     const orderData = {
       orderNumber: generatedOrderNumber,
       timestamp: new Date().toLocaleString('ar-EG', { timeZone: 'Africa/Cairo' }),
-      product: 'The OVi (250 ml) - Strawberry & Blueberry',
+      product: productType === 'oud' ? 'The OVi (250 ml) - OUD & Coconut' : 'The OVi (250 ml) - Strawberry & Blueberry',
       quantity: quantity,
       name: formData.name,
       phone: `+20${formData.phone}`,
@@ -432,7 +446,7 @@ export default function Checkout({ onBack, initialQuantity = 1 }: { onBack: () =
       doc.line(20, tableStartY + 12, 190, tableStartY + 12);
       
       doc.setFont("helvetica", "normal");
-      doc.text(`The OVi (250 ml) - Strawberry & Blueberry (x${quantity})`, 20, tableStartY + 22);
+      doc.text(productType === 'oud' ? `The OVi (250 ml) - OUD & Coconut (x${quantity})` : `The OVi (250 ml) - Strawberry & Blueberry (x${quantity})`, 20, tableStartY + 22);
       doc.text(`EGP ${subtotal}`, 170, tableStartY + 22);
       
       let currentY = tableStartY + 30;
@@ -647,11 +661,11 @@ export default function Checkout({ onBack, initialQuantity = 1 }: { onBack: () =
                   
                   <div className="flex items-center gap-4 mb-6">
                     <div className="w-16 h-16 bg-brand-light flex items-center justify-center p-2 border border-brand-border shrink-0">
-                       <img src="/photos/farawla.png" alt="The OVi" className="h-full w-full object-contain mix-blend-darken" />
+                       <img src={productType === 'oud' ? "/photos/oud.webp" : "/photos/farawla.webp"} alt="The OVi" className="h-full w-full object-contain mix-blend-darken" />
                     </div>
                     <div className="flex-1">
                       <h3 className="font-medium text-brand-deep">The OVi (250 ml)</h3>
-                      <p className="text-sm text-brand-text/70 mb-2">Strawberry & Blueberry</p>
+                      <p className="text-sm text-brand-text/70 mb-2">{productType === 'oud' ? 'OUD & Coconut' : 'Strawberry & Blueberry'}</p>
                       <div className="flex items-center gap-3">
                         <button 
                           onClick={() => setQuantity(Math.max(1, quantity - 1))}

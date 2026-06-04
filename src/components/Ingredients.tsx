@@ -33,7 +33,7 @@ export default function Ingredients() {
           {[...ingredientsList, ...ingredientsList, ...ingredientsList, ...ingredientsList].map((item, i) => (
             <span 
               key={i} 
-              className="px-6 text-xl md:text-2xl font-light text-brand-text/40 font-serif hover:opacity-100 hover:text-brand-deep transition-colors cursor-default"
+              className="px-6 text-xl md:text-2xl font-light text-brand-text/70 font-serif hover:opacity-100 hover:text-brand-deep transition-colors cursor-default"
             >
               {item} <span className="text-brand-accent3 mx-4">•</span>
             </span>

@@ -24,7 +24,7 @@ export default function SplashScreen({ onComplete }: { onComplete: () => void })
         className="relative h-[40vh] md:h-[50vh] flex flex-col items-center"
       >
         <motion.img 
-          src="/photos/farawla.png"
+          src="/photos/farawla.webp"
           className="h-full w-auto object-contain mix-blend-darken"
           alt="The OVi Loading"
           animate={{ y: [0, -15, 0] }}

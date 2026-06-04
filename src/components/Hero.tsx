@@ -70,7 +70,7 @@ export default function Hero() {
           className="h-full w-full relative"
         >
           <img 
-            src="/photos/farawla.png" 
+            src="/photos/farawla.webp" 
             alt="The OVi Body Splash" 
             className="h-full w-auto object-contain mix-blend-darken"
             onError={(e) => {
@@ -159,7 +159,7 @@ export default function Hero() {
         animate={{ opacity: 1 }}
         transition={{ delay: 1.5, duration: 1 }}
       >
-        <span className="text-sm font-medium tracking-widest text-brand-deep/60 mb-2">SCROLL</span>
+        <span className="text-sm font-medium tracking-widest text-brand-deep/80 mb-2">SCROLL</span>
         <motion.div 
           animate={{ y: [0, 10, 0] }}
           transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}

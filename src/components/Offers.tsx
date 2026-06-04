@@ -169,7 +169,7 @@ export default function Offers({ onCheckout }: OffersProps) {
       `}} />
       <div className="max-w-6xl mx-auto text-center px-4 mb-12">
         <h2 className="text-4xl text-[#5b3146] mb-4 font-bold" dir="rtl">عروضنا الخاصة</h2>
-        <p className="text-gray-600 mb-8 font-semibold text-lg" dir="rtl">اختر العرض الأنسب لك واستمتع بشحن مجاني للقاهرة، الجيزة، والقليوبية.</p>
+        <p className="text-gray-600 mb-8 font-semibold text-lg" dir="rtl">✨ كلما زادت الكمية، زادت التوفير! اطلب أكثر واحصل على أفضل سعر مع شحن مجاني لأقرب المحافظات إليك.</p>
       </div>
 
       <div className="px-4">

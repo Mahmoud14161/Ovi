@@ -10,7 +10,7 @@ interface OffersProps {
 const PRODUCTS = [
   {
     id: 'strawberry' as const,
-    name: 'اوفي رائحة الفراولة والتوت',
+    name: 'اوفي رائحة الفراولة والتوت (250مل)',
     reviewCount: '430',
     img: '/photos/farawla.webp',
     bgImages: (
@@ -28,7 +28,7 @@ const PRODUCTS = [
   },
   {
     id: 'oud' as const,
-    name: 'اوفي رائحة العود وجوز الهند',
+    name: 'اوفي رائحة العود وجوز الهند (250مل)',
     reviewCount: '128',
     img: '/photos/oud.webp',
     bgImages: (

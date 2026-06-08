@@ -1,16 +1,392 @@
-// CI trigger commit
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, CheckCircle, CreditCard, Download, Loader2, Minus, Plus } from 'lucide-react';
+import { ArrowLeft, CheckCircle, CreditCard, Download, Loader2, Minus, Plus, Shield, Truck, Lock } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { egyptLocations } from '../data/egyptLocations';
 
 type Step = 'form' | 'instapay' | 'success';
+type FormStep = 1 | 2 | 3;
+
+// Arabic translations for all cities defined in egyptLocations
+const cityTranslations: Record<string, string> = {
+  // Cairo
+  "Nasr City": "مدينة نصر",
+  "Heliopolis": "مصر الجديدة",
+  "Maadi": "المعادي",
+  "New Cairo": "القاهرة الجديدة",
+  "Madinaty": "مدينتي",
+  "Badr City": "مدينة بدر",
+  "El Shorouk": "الشروق",
+  "Downtown": "وسط البلد",
+  "Shoubra": "شبرا",
+  "El Zawya El Hamra": "الزاوية الحمراء",
+  "Helwan": "حلوان",
+  "Mokattam": "المقطم",
+  "Al Rehab": "الرحاب",
+  "15th of May": "15 مايو",
+  "Zamalek": "الزمالك",
+  "Garden City": "جاردن سيتي",
+  "El Marg": "المرج",
+  "Dar El Salam": "دار السلام",
+  "El Basatin": "البساتين",
+  "Sayeda Zeinab": "السيدة زينب",
+  "Misr El Qadima": "مصر القديمة",
+  "El Khalifa": "الخليفة",
+  "Manshiyat Naser": "منشأة ناصر",
+  "El Weili": "الوايلي",
+  "El Matareya": "المطرية",
+  "Zeitoun": "الزيتون",
+  "Hadaeq El Kobba": "حدائق القبة",
+  "Rod El Farag": "روض الفرج",
+  "El Sahel": "الساحل",
+
+  // Giza
+  "Giza": "الجيزة",
+  "6th of October": "6 أكتوبر",
+  "Sheikh Zayed": "الشيخ زايد",
+  "Dokki": "الدقي",
+  "Mohandeseen": "المهندسين",
+  "Haram": "الهرم",
+  "Faisal": "فيصل",
+  "Imbaba": "إمبابة",
+  "Agouza": "العجوزة",
+  "El Hawamdeya": "الحوامدية",
+  "Osim": "أوسيم",
+  "Badrashin": "البدرشين",
+  "Ayat": "العياط",
+  "Kerdasa": "كرداسة",
+  "Abu El Nomros": "أبو النمرس",
+  "El Saff": "الصف",
+  "El Wahat El Bahariya": "الواحات البحرية",
+  "Omrania": "العمرانية",
+  "Talbia": "الطالبية",
+  "Bulaq El Dakrour": "بولاق الدكرور",
+  "Mounib": "المنيب",
+  "Manshiyet El Qanater": "منشأة القناطر",
+  "Atfeh": "أطفيح",
+  "Saft El-Laban": "صفط اللبن",
+  "Saqqara": "سقارة",
+  "Mit Rahina": "ميت رهينة",
+  "Nahya": "ناهيا",
+  "Kafr Tohormos": "كفر طهرمس",
+  "El-Baragil": "البراجيل",
+  "Dahshur": "دهشور",
+
+  // Qalyubia
+  "Banha": "بنها",
+  "Qalyub": "قليوب",
+  "Shoubra El Kheima": "شبرا الخيمة",
+  "Khanka": "الخانكة",
+  "Obour": "العبور",
+  "Shibin El Qanater": "شبين القناطر",
+  "Toukh": "طوخ",
+  "Qaha": "قها",
+  "Kafr Shukr": "كفر شكر",
+  "El Qanater El Khayreya": "القناطر الخيرية",
+  "Tukh": "طوخ",
+  "El Khusus": "الخصوص",
+  "Bahtim": "بهتيم",
+  "Musturud": "مسطرد",
+  "Abu Zaabal": "أبو زعبل",
+  "Sindbis": "سندبيس",
+  "Bata": "بتا",
+  "Bigam": "بيجام",
+  "Qalama": "قلما",
+  "Mit Kenana": "ميت كنانة",
+  "Sheblanga": "شبلنجة",
+
+  // Alexandria
+  "Alexandria": "الإسكندرية",
+  "Borg El Arab": "برج العرب",
+  "Smouha": "سموحة",
+  "Miami": "ميامي",
+  "Agami": "العجمي",
+  "Sidi Gaber": "سيدي جابر",
+  "Mandara": "المندرة",
+  "Montaza": "المنتزة",
+  "Roushdy": "رشدي",
+  "Glim": "جليم",
+  "Sidi Bishr": "سيدي بشر",
+  "San Stefano": "سان ستيفانو",
+  "Stanley": "ستانلي",
+  "Louran": "لوران",
+  "Cleopatra": "كليوباترا",
+  "Sporting": "سبورتنج",
+  "Camp Caesar": "كامب شيزار",
+  "El Ibrahimiya": "الإبراهيمية",
+  "El Shatby": "الشاطبي",
+  "Moharam Bek": "محرم بك",
+  "Karmouz": "كرموز",
+
+  // Dakahlia
+  "Mansoura": "المنصورة",
+  "Talkha": "طلخا",
+  "Mit Ghamr": "ميت غمر",
+  "Dekernes": "دكرنس",
+  "Aga": "أجا",
+  "Menjez": "منية النصر",
+  "Senbellawein": "السنبلاوين",
+  "Sherbin": "شربين",
+  "Belqas": "بلقاس",
+  "Matareya": "المطرية",
+  "Bani Ebeid": "بني عبيد",
+  "El Gamaliya": "الجمالية",
+  "El Kurdi": "الكردي",
+  "Manzala": "المنزلة",
+  "Nabaroh": "نبروه",
+  "Timay El Amdid": "تمى الأمديد",
+
+  // Red Sea
+  "Hurghada": "الغردقة",
+  "Safaga": "سفاجا",
+  "Quseer": "القصير",
+  "Marsa Alam": "مرسى علم",
+  "Ras Gharib": "رأس غارب",
+  "Shalateen": "شلاتين",
+  "Halayeb": "حلايب",
+  "El Gouna": "الجونة",
+  "Makadi Bay": "خليج مكادي",
+  "Soma Bay": "سوما باي",
+
+  // Beheira
+  "Damanhour": "دمنهور",
+  "Kafr El Dawwar": "كفر الدوار",
+  "Rashid": "رشيد",
+  "Edku": "إدكو",
+  "Abu al-Matamir": "أبو المطامير",
+  "Abu Hummad": "أبو حمص",
+  "Delengat": "الدلنجات",
+  "Mahmoudiyah": "المحمودية",
+  "Natrun": "وادي النطرون",
+  "Rahmaniya": "الرحمانية",
+  "Shubrakhit": "شبراخيت",
+  "Itay El Barud": "إيتاي البارود",
+  "Hosh Essa": "حوش عيسى",
+  "Badr": "بدر",
+
+  // Fayoum
+  "Fayoum": "الفيوم",
+  "Atsa": "إطسا",
+  "Ibsheway": "إبشواي",
+  "Sinnuris": "سنورس",
+  "Tamiya": "طامية",
+  "Yousef Sadek": "يوسف الصديق",
+  "New Fayoum": "الفيوم الجديدة",
+
+  // Gharbia
+  "Tanta": "طنطا",
+  "El Mahalla El Kubra": "المحلة الكبرى",
+  "Kafr El Zayat": "كفر الزيات",
+  "Zefta": "زفتى",
+  "Samannoud": "سمنود",
+  "Basyoun": "بسيون",
+  "Qutour": "قطور",
+  "Samanoud": "سمنود",
+
+  // Ismailia
+  "Ismailia": "الإسماعيلية",
+  "Fayed": "فايد",
+  "Qantara Sharq": "القنطرة شرق",
+  "Qantara Gharb": "القنطرة غرب",
+  "Abu Suwir": "أبو صوير",
+  "Kassasin": "القصاصين",
+  "Tell El Kebir": "التل الكبير",
+  "New Ismailia": "الإسماعيلية الجديدة",
+
+  // Menofia
+  "Shibin El Kom": "شبين الكوم",
+  "Menouf": "منوف",
+  "Ashmoun": "أشمون",
+  "Sers El Lyan": "سرس الليان",
+  "Tala": "تلا",
+  "Bagour": "الباجور",
+  "Shohada": "الشهداء",
+  "Quweisna": "قويسنا",
+  "Sadat City": "مدينة السادات",
+  "Birket El Sab": "بركة السبع",
+
+  // Minya
+  "Minya": "المنيا",
+  "Maghagha": "مغاغة",
+  "Bani Mazar": "بني مزار",
+  "Matai": "مطاي",
+  "Samalut": "سمالوط",
+  "Abu Qurqas": "أبو قرقاص",
+  "Mallawi": "ملوي",
+  "Deir Mawas": "دير مواس",
+  "New Minya": "المنيا الجديدة",
+
+  // Qena
+  "Qena": "قنا",
+  "Abu Tesht": "أبو تشت",
+  "Nag Hammadi": "نجع حمادي",
+  "Deshna": "دشنا",
+  "Waqf": "الوقف",
+  "Qift": "قفط",
+  "Naqada": "نقادة",
+  "Qus": "قوص",
+  "Farshout": "فرشوط",
+  "New Qena": "قنا الجديدة",
+
+  // Sohag
+  "Sohag": "سوهاج",
+  "Akhmim": "أخميم",
+  "Girga": "جرجا",
+  "Tahta": "طهطا",
+  "Maragha": "المراغة",
+  "Baliana": "البلينا",
+  "Monsha'a": "المنشأة",
+  "Juhayna": "جهينة",
+  "Tima": "طما",
+  "New Sohag": "سوهاج الجديدة",
+
+  // Asyut
+  "Asyut": "أسيوط",
+  "Dairut": "ديروط",
+  "Qusiya": "القوصية",
+  "Abnub": "أبنوب",
+  "Manfalut": "منفلوط",
+  "Abu Tig": "أبو تيج",
+  "Ghanayem": "الغنايم",
+  "Sahel Selim": "ساحل سليم",
+  "Badari": "البداري",
+  "Sedfa": "صدفا",
+  "New Asyut": "أسيوط الجديدة",
+  "Abou Teeg": "أبو تيج",
+
+  // Aswan
+  "Aswan": "أسوان",
+  "Edfu": "إدفو",
+  "Kom Ombo": "كوم أمبو",
+  "Daraw": "دراو",
+  "Nasr Al Nuba": "نصر النوبة",
+  "New Aswan": "أسوان الجديدة",
+  "Abu Simbel": "أبو سمبل",
+
+  // Beni Suef
+  "Beni Suef": "بني سويف",
+  "Nasser": "ناصر",
+  "Fashn": "الفشن",
+  "Biba": "ببا",
+  "Ihnasiya": "إهناسيا",
+  "Washta": "الواسطى",
+  "Smasta": "سمسطا",
+  "New Beni Suef": "بني سويف الجديدة",
+
+  // Port Said
+  "Port Said": "بورسعيد",
+  "Port Fouad": "بورفؤاد",
+  "Al-Zohour": "الزهور",
+  "Sharq": "الشرق",
+  "Dawahy": "الضواحي",
+  "Manakh": "المناخ",
+  "Al-Arab": "العرب",
+  "Al-Janoub": "الجنوب",
+
+  // Damietta
+  "Damietta": "دمياط",
+  "New Damietta": "دمياط الجديدة",
+  "Ras El Bar": "رأس البر",
+  "Faraskour": "فارسكور",
+  "Kafr Saad": "كفر سعد",
+  "Zarqan": "الزرقا",
+  "Mit Abu Ghaleb": "ميت أبو غالب",
+  "El Zarqa": "الزرقا",
+  "Kafr El Battikh": "كفر البطيخ",
+
+  // Kafr El Sheikh
+  "Kafr El Sheikh": "كفر الشيخ",
+  "Desouk": "دسوق",
+  "Metoubes": "مطوبس",
+  "Qallin": "قلين",
+  "Baltim": "بلطيم",
+  "Hamool": "الحامول",
+  "Riyadh": "الرياض",
+  "Sidi Salem": "سيدي سالم",
+  "Biyala": "بيلا",
+  "Mootobas": "مطوبس",
+  "Borg El Burullus": "برج البرلس",
+
+  // Matrouh
+  "Marsa Matrouh": "مرسى مطروح",
+  "Hammam": "الحمام",
+  "Alamein": "العلمين",
+  "Dabaa": "الضبعة",
+  "Sidi Barrani": "سيدي براني",
+  "Salum": "السلوم",
+  "Siwa": "سيوة",
+  "Amriya": "العامرية",
+  "El Negaila": "النجيلة",
+  "Sidi Abdel Rahman": "سيدي عبد الرحمن",
+  "Ras El Hekma": "رأس الحكمة",
+
+  // Luxor
+  "Luxor": "الأقصر",
+  "Karnak": "الكرنك",
+  "Armant": "أرمنت",
+  "Esna": "إسنا",
+  "El Tod": "الطود",
+  "Qurna": "القرنة",
+  "New Tiba": "طيبة الجديدة",
+  "Al Bayadiya": "البياضية",
+
+  // New Valley
+  "Kharga": "الخارجة",
+  "Dakhla": "الداخلة",
+  "Farafra": "الفرافرة",
+  "Baris": "باريس",
+  "Balat": "بلاط",
+  "Mout": "موط",
+
+  // North Sinai
+  "Arish": "العريش",
+  "Sheikh Zuweid": "الشيخ زويد",
+  "Rafah": "رفح",
+  "Bir al-Abed": "بئر العبد",
+  "Hasana": "الحسنة",
+  "Nekhel": "نخل",
+
+  // South Sinai
+  "Sharm El Sheikh": "شرم الشيخ",
+  "Dahab": "دهب",
+  "Nuweiba": "نويبع",
+  "Taba": "طابا",
+  "Saint Catherine": "سانت كاترين",
+  "Tor Sinai": "طور سيناء",
+  "Abu Rudeis": "أبو رديس",
+  "Abu Zenima": "أبو زنيمة",
+  "Ras Sedr": "رأس سدر",
+
+  // Sharqia
+  "Zagazig": "الزقازيق",
+  "10th of Ramadan": "العاشر من رمضان",
+  "Minya El Qamh": "منيا القمح",
+  "Belbeis": "بلبيس",
+  "Mashtoul El Souq": "مشتول السوق",
+  "Qenayat": "القنايات",
+  "Abu Hammad": "أبو حماد",
+  "El Qurain": "القرين",
+  "Hehia": "ههيا",
+  "Abu Kabir": "أبو كبير",
+  "Faqous": "فاقوس",
+  "Husseiniya": "الحسينية",
+  "Awlad Saqr": "أولاد صقر",
+  "Diarb Negm": "ديرب نجم",
+  "Ibrahimia": "الإبراهيمية",
+  "Kafr Saqr": "كفر صقر",
+  "New Salhia": "الصالحية الجديدة",
+
+  // Suez
+  "Suez": "السويس",
+  "Arbaeen": "الأربعين",
+  "Ataqah": "عتاقة",
+  "Ganayen": "الجناين"
+};
 
 function SuccessContent({
   orderNumber, formData, quantity, subtotal, vat, shipping, appliedDiscount,
-  total, pdfUrl, isGeneratingPdf, handlePrint, invoiceRef, getFullAddress
+  total, pdfUrl, isGeneratingPdf, handlePrint, invoiceRef, getFullAddress, productType
 }: {
   orderNumber: string;
   formData: { name: string; phone: string; email: string; governorate: string; city: string; street: string };
@@ -25,12 +401,10 @@ function SuccessContent({
   handlePrint: () => void;
   invoiceRef: React.RefObject<HTMLDivElement>;
   getFullAddress: () => string;
+  productType: 'strawberry' | 'oud';
 }) {
-  // Auto-redirect to home after 5 seconds, replace history so back button also goes home
   useEffect(() => {
-    // Replace current state in history with '/' (home) so this page isn't in history
     window.history.replaceState(null, '', '/');
-    // Also push a state so back button stays on '/'
     window.history.pushState(null, '', '/');
     const onPopState = () => {
       window.location.replace('/');
@@ -49,13 +423,13 @@ function SuccessContent({
 
   return (
     <>
-      <div className="text-center mb-8 hidden-print">
-        <div className="w-16 h-16 bg-brand-accent3/10 text-brand-accent3 rounded-full flex items-center justify-center mx-auto mb-4">
-          <CheckCircle className="w-8 h-8" />
+      <div className="text-center mb-8 hidden-print" dir="rtl">
+        <div className="w-16 h-16 bg-brand-accent3/10 text-brand-deep rounded-full flex items-center justify-center mx-auto mb-4">
+          <CheckCircle className="w-8 h-8 text-brand-deep" />
         </div>
-        <h2 className="text-3xl font-serif text-brand-deep mb-3">Order Received!</h2>
+        <h2 className="text-3xl font-bold text-brand-deep mb-3">تم استلام طلبك بنجاح!</h2>
         <p className="text-brand-text/80 font-light max-w-md mx-auto">
-          Thank you for your order. We have received your request and will contact you shortly to confirm the details.
+          نشكرك على ثقتك بنا. لقد تم تسجيل طلبك بنجاح وسنتواصل معك قريباً لتأكيد التفاصيل وتوصيل الطلب.
         </p>
         <p className="text-sm text-brand-text/50 mt-3">
           سيتم تحويلك تلقائياً للصفحة الرئيسية خلال 5 ثوانٍ...
@@ -63,63 +437,65 @@ function SuccessContent({
       </div>
 
       {/* Printable Invoice Area */}
-      <div ref={invoiceRef} className="bg-white border border-brand-border p-8 printable-area">
+      <div ref={invoiceRef} className="bg-white border border-brand-border p-8 printable-area" dir="rtl">
         <div className="flex justify-between items-start border-b border-brand-border pb-6 mb-6">
           <div>
             <h3 className="font-serif italic text-3xl text-brand-deep">The OVi</h3>
-            <p className="text-sm text-brand-text/60 mt-1">Proforma Invoice / Order Summary</p>
+            <p className="text-sm text-brand-text/60 mt-1">فاتورة مبدئية / ملخص الطلب</p>
           </div>
-          <div className="text-right">
+          <div className="text-left">
             <p className="font-medium text-brand-deep">{orderNumber}</p>
-            <p className="text-sm text-brand-text/60">{new Date().toLocaleDateString()}</p>
+            <p className="text-sm text-brand-text/60">{new Date().toLocaleDateString('ar-EG')}</p>
           </div>
         </div>
 
-        <div className="mb-8">
-          <h4 className="text-sm font-medium text-brand-text/50 uppercase tracking-widest mb-3">Bill To</h4>
-          <p className="font-medium text-brand-deep">{formData.name}</p>
-          <p className="text-brand-text/80">+20 {formData.phone}</p>
+        <div className="mb-8 text-right">
+          <h4 className="text-sm font-semibold text-brand-text/50 uppercase tracking-widest mb-3">بيانات العميل</h4>
+          <p className="font-semibold text-brand-deep">{formData.name}</p>
+          <p className="text-brand-text/80" dir="ltr">+20 {formData.phone}</p>
           {formData.email && <p className="text-brand-text/80">{formData.email}</p>}
           <p className="text-brand-text/80 mt-1">{getFullAddress()}</p>
         </div>
 
-        <table className="w-full mb-8 text-left border-collapse">
+        <table className="w-full mb-8 text-right border-collapse">
           <thead>
             <tr className="border-b-2 border-brand-border">
-              <th className="py-3 text-sm font-medium text-brand-text/50 uppercase tracking-wider">Item</th>
-              <th className="py-3 text-sm font-medium text-brand-text/50 uppercase tracking-wider text-right">Amount</th>
+              <th className="py-3 text-sm font-semibold text-brand-text/50 uppercase tracking-wider">المنتج</th>
+              <th className="py-3 text-sm font-semibold text-brand-text/50 uppercase tracking-wider text-left">المجموع</th>
             </tr>
           </thead>
           <tbody>
             <tr className="border-b border-brand-border">
-              <td className="py-4 text-brand-deep">The OVi (250 ml) - Strawberry & Blueberry (x{quantity})</td>
-              <td className="py-4 text-brand-deep text-right">EGP {subtotal}</td>
+              <td className="py-4 text-brand-deep">
+                The OVi (250 ml) - {productType === 'oud' ? 'OUD & Coconut' : 'Strawberry & Blueberry'} (x{quantity})
+              </td>
+              <td className="py-4 text-brand-deep text-left">{subtotal} جنيه مصري</td>
             </tr>
             {appliedDiscount > 0 && (
               <tr className="border-b border-brand-border">
-                <td className="py-4 text-brand-accent3">Discount applied</td>
-                <td className="py-4 text-brand-accent3 text-right">- EGP {appliedDiscount}</td>
+                <td className="py-4 text-brand-accent3">الخصم المطبق</td>
+                <td className="py-4 text-brand-accent3 text-left">- {appliedDiscount} جنيه مصري</td>
               </tr>
             )}
             <tr className="border-b border-brand-border">
-              <td className="py-4 text-brand-text/70">VAT</td>
-              <td className="py-4 text-brand-text/70 text-right">EGP {vat}</td>
+              <td className="py-4 text-brand-text/70">ضريبة القيمة المضافة</td>
+              <td className="py-4 text-brand-text/70 text-left">{vat} جنيه مصري</td>
             </tr>
             <tr className="border-b border-brand-border">
-              <td className="py-4 text-brand-text/70">Shipping fee</td>
-              <td className="py-4 text-brand-text/70 text-right">{shipping === 0 ? 'Free' : `EGP ${shipping}`}</td>
+              <td className="py-4 text-brand-text/70">مصاريف الشحن</td>
+              <td className="py-4 text-brand-text/70 text-left">{shipping === 0 ? 'شحن مجاني' : `${shipping} جنيه مصري`}</td>
             </tr>
           </tbody>
           <tfoot>
             <tr>
-              <td className="py-4 font-medium text-brand-deep text-lg">Total Amount</td>
-              <td className="py-4 font-medium text-brand-accent3 text-xl text-right">EGP {total}</td>
+              <td className="py-4 font-semibold text-brand-deep text-lg">المبلغ الإجمالي</td>
+              <td className="py-4 font-bold text-brand-deep text-xl text-left">{total} جنيه مصري</td>
             </tr>
           </tfoot>
         </table>
 
         <div className="text-center text-sm text-brand-text/60 italic border-t border-brand-border pt-6">
-          This is a preliminary order summary and does not serve as a final receipt of payment.
+          هذا ملخص مبدئي للطلب ولا يعتبر إيصال دفع نهائي.
         </div>
       </div>
 
@@ -130,19 +506,19 @@ function SuccessContent({
             download={`OVi_Order_${orderNumber}.pdf`}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-2 bg-brand-deep text-white px-6 py-3 hover:bg-brand-text transition-colors font-medium shadow-sm"
+            className="inline-flex items-center gap-2 bg-brand-deep text-white px-6 py-3 rounded-full hover:opacity-90 transition-opacity font-medium shadow-sm"
           >
             <Download className="w-4 h-4" />
-            <span>Download PDF (Click here if it didn't start)</span>
+            <span>تحميل الفاتورة PDF</span>
           </a>
         ) : (
           <button 
             onClick={handlePrint}
             disabled={isGeneratingPdf}
-            className="inline-flex items-center gap-2 bg-brand-surface border border-brand-border text-brand-deep px-6 py-3 hover:bg-brand-light transition-colors font-medium shadow-sm disabled:opacity-70 disabled:cursor-wait"
+            className="inline-flex items-center gap-2 bg-brand-surface border border-brand-border text-brand-deep px-6 py-3 rounded-full hover:bg-brand-light transition-colors font-medium shadow-sm disabled:opacity-70 disabled:cursor-wait"
           >
             {isGeneratingPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-            <span>{isGeneratingPdf ? 'Generating PDF...' : 'Download / Print PDF'}</span>
+            <span>{isGeneratingPdf ? 'جاري إنشاء الملف...' : 'تحميل / طباعة الفاتورة'}</span>
           </button>
         )}
       </div>
@@ -152,6 +528,7 @@ function SuccessContent({
 
 export default function Checkout({ onBack, initialQuantity = 1, initialProduct = 'strawberry' }: { onBack: () => void; initialQuantity?: number, initialProduct?: 'strawberry' | 'oud' }) {
   const [step, setStep] = useState<Step>('form');
+  const [formStep, setFormStep] = useState<FormStep>(1);
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -160,7 +537,8 @@ export default function Checkout({ onBack, initialQuantity = 1, initialProduct =
     street: '',
     email: '',
   });
-  const [paymentMethod, setPaymentMethod] = useState<'instapay' | 'cod'>('instapay');
+  const [paymentMethod, setPaymentMethod] = useState<'instapay' | 'cod' | 'paymob'>('cod');
+  const [isProcessing, setIsProcessing] = useState(false);
   const [orderNumber, setOrderNumber] = useState('');
   const [quantity, setQuantity] = useState(initialQuantity);
   const [productType, setProductType] = useState<'strawberry' | 'oud'>(initialProduct);
@@ -170,6 +548,7 @@ export default function Checkout({ onBack, initialQuantity = 1, initialProduct =
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const invoiceRef = useRef<HTMLDivElement>(null);
+  const [isMobileSummaryExpanded, setIsMobileSummaryExpanded] = useState(false);
 
   const price = productType === 'oud' ? 450 : 350;
   
@@ -179,7 +558,7 @@ export default function Checkout({ onBack, initialQuantity = 1, initialProduct =
     if (quantity === 1) {
       subtotal = 350;
     } else if (quantity === 2) {
-      subtotal = 580; // Assuming this legacy value is kept
+      subtotal = 580;
     } else if (quantity === 3) {
       subtotal = 810;
     } else if (quantity > 3) {
@@ -194,14 +573,23 @@ export default function Checkout({ onBack, initialQuantity = 1, initialProduct =
     } else if (quantity === 3) {
       subtotal = 1230;
     } else if (quantity > 3) {
-      subtotal = 1230 + (quantity - 3) * 410; // Approximate per bottle price
+      subtotal = 1230 + (quantity - 3) * 410;
     }
   }
 
   const appliedDiscount = Math.round(subtotal * discountRate);
 
-  const isFreeGov = ['Cairo', 'Giza', 'Qalyubia'].includes(formData.governorate);
-  const shipping = (isFreeGov || isFreeShippingCode) ? 0 : 35;
+  const isSpecialGov = ['Cairo', 'Giza', 'Qalyubia'].includes(formData.governorate);
+  
+  // Shipping is only shown/calculated once governorate is selected
+  let shipping = 0;
+  if (formData.governorate) {
+    if (isFreeShippingCode || quantity > 1) {
+      shipping = 0;
+    } else {
+      shipping = isSpecialGov ? 35 : 60;
+    }
+  }
   const vat = 0;
   const total = Math.max(0, subtotal + shipping + vat - appliedDiscount);
 
@@ -210,7 +598,6 @@ export default function Checkout({ onBack, initialQuantity = 1, initialProduct =
   // Track when checkout page is opened (InitiateCheckout / begin_checkout)
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      // 1. Google Analytics Direct Event
       if ((window as any).gtag) {
         (window as any).gtag('event', 'begin_checkout', {
           currency: 'EGP',
@@ -224,7 +611,6 @@ export default function Checkout({ onBack, initialQuantity = 1, initialProduct =
         });
       }
 
-      // 2. Meta Pixel Event
       if ((window as any).fbq) {
         (window as any).fbq('track', 'InitiateCheckout', {
           content_ids: [productType === 'oud' ? 'OVI-BS-002' : 'OVI-BS-001'],
@@ -241,7 +627,6 @@ export default function Checkout({ onBack, initialQuantity = 1, initialProduct =
     if (step === 'success' && orderNumber && !hasTrackedPurchase.current) {
       hasTrackedPurchase.current = true;
       if (typeof window !== 'undefined') {
-        // 1. Google Analytics Direct Event
         if ((window as any).gtag) {
           (window as any).gtag('event', 'purchase', {
             transaction_id: orderNumber,
@@ -258,7 +643,6 @@ export default function Checkout({ onBack, initialQuantity = 1, initialProduct =
           });
         }
 
-        // 2. Google Tag Manager dataLayer
         if ((window as any).dataLayer) {
           (window as any).dataLayer.push({
             event: 'purchase',
@@ -278,7 +662,6 @@ export default function Checkout({ onBack, initialQuantity = 1, initialProduct =
           });
         }
 
-        // 3. Meta Pixel Event
         if ((window as any).fbq) {
           (window as any).fbq('track', 'Purchase', {
             content_ids: [productType === 'oud' ? 'OVI-BS-002' : 'OVI-BS-001'],
@@ -301,22 +684,24 @@ export default function Checkout({ onBack, initialQuantity = 1, initialProduct =
     } else if (code === 'OVI10') {
       setIsFreeShippingCode(false);
       setDiscountRate(0.1);
-    } else if (code === 'OVI%MARYAM2026' || code === 'OVI%HOSINY2026' || code === 'OVI%RAHMA2026' || code === 'OVI%2026' || code === 'OVI%HEBATURKI') {
+    } else if (code === 'OVI%MARYAM2026' || code === 'OVI%HOSINY2026' || code === 'OVI%RAHMA2026' || code === 'OVI%2026' || code === 'OVI%HEBATURKI' || code === 'OVI%NA2026') {
       setIsFreeShippingCode(false);
       setDiscountRate(0.15);
     } else {
       setIsFreeShippingCode(false);
       setDiscountRate(0); // Invalid code
-      alert("Invalid discount code");
+      alert("كود الخصم غير صحيح");
     }
   };
 
   const getFullAddress = () => {
-    return [formData.street, formData.city, formData.governorate].filter(Boolean).join(', ');
+    const govObj = egyptLocations.find(g => g.name === formData.governorate);
+    const govArabic = govObj ? govObj.arabicName : formData.governorate;
+    return [formData.street, formData.city, govArabic].filter(Boolean).join('، ');
   };
 
   const sendToSheet = async (generatedOrderNumber: string) => {
-    const sheetUrl = import.meta.env.VITE_GOOGLE_SHEET_URL;
+    const sheetUrl = (import.meta as any).env.VITE_GOOGLE_SHEET_URL;
     if (!sheetUrl) return;
 
     const orderData = {
@@ -331,11 +716,11 @@ export default function Checkout({ onBack, initialQuantity = 1, initialProduct =
       street: formData.street,
       fullAddress: getFullAddress(),
       email: formData.email || '—',
-      paymentMethod: paymentMethod === 'instapay' ? 'Instapay' : 'Cash on Delivery',
+      paymentMethod: paymentMethod === 'instapay' ? 'Instapay' : paymentMethod === 'paymob' ? 'Paymob (Card)' : 'Cash on Delivery',
       discountCode: discountCode.trim().toUpperCase() || 'لا يوجد',
       discountAmount: appliedDiscount,
       total: total,
-      status: paymentMethod === 'cod' ? 'انتظار التأكيد (COD)' : 'انتظار التحويل (Instapay)',
+      status: paymentMethod === 'cod' ? 'انتظار التأكيد (COD)' : paymentMethod === 'paymob' ? 'انتظار الدفع (Paymob)' : 'انتظار التحويل (Instapay)',
     };
 
     try {
@@ -350,8 +735,8 @@ export default function Checkout({ onBack, initialQuantity = 1, initialProduct =
 
     // Telegram Notification
     try {
-      const botToken = import.meta.env.VITE_TELEGRAM_BOT_TOKEN;
-      const chatId = import.meta.env.VITE_TELEGRAM_CHAT_ID;
+      const botToken = (import.meta as any).env.VITE_TELEGRAM_BOT_TOKEN;
+      const chatId = (import.meta as any).env.VITE_TELEGRAM_CHAT_ID;
       if (botToken && chatId) {
         const emoji = paymentMethod === 'cod' ? '💵' : '💳';
         const lines = [
@@ -391,20 +776,56 @@ export default function Checkout({ onBack, initialQuantity = 1, initialProduct =
   };
 
   const handleNext = async () => {
-    // Generate order number
+    setIsProcessing(true);
     let currentOrderNumber = orderNumber;
     if (!currentOrderNumber) {
       currentOrderNumber = `ORD-${Math.floor(Math.random() * 90000) + 10000}`;
       setOrderNumber(currentOrderNumber);
     }
 
-    // Send order data to Google Sheets
     await sendToSheet(currentOrderNumber);
 
     if (paymentMethod === 'instapay') {
       setStep('instapay');
+      setIsProcessing(false);
+    } else if (paymentMethod === 'paymob') {
+      try {
+        const response = await fetch('/api/create-intention', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amount: (total * 100).toString(),
+            currency: 'EGP',
+            billing_data: {
+              first_name: formData.name.split(' ')[0] || "NA",
+              last_name: formData.name.split(' ').slice(1).join(' ') || "NA",
+              phone_number: `+20${formData.phone}`,
+              email: formData.email || "no-reply@ovibeauty.com",
+              street: formData.street || "NA",
+              building: "NA",
+              floor: "NA",
+              apartment: "NA",
+              city: formData.city || "NA",
+              country: "EG"
+            }
+          })
+        });
+        const data = await response.json();
+        if (data.client_secret) {
+          const publicKey = (import.meta as any).env.VITE_PAYMOB_PUBLIC_KEY;
+          window.location.href = `https://accept.paymob.com/unifiedcheckout/?publicKey=${publicKey}&clientSecret=${data.client_secret}`;
+        } else {
+          alert("فشل تهيئة الدفع الإلكتروني. يرجى اختيار طريقة دفع أخرى.");
+          setIsProcessing(false);
+        }
+      } catch (error) {
+        console.error(error);
+        alert("حدث خطأ أثناء الاتصال ببوابة الدفع. يرجى المحاولة مرة أخرى.");
+        setIsProcessing(false);
+      }
     } else {
       setStep('success');
+      setIsProcessing(false);
     }
   };
 
@@ -413,7 +834,6 @@ export default function Checkout({ onBack, initialQuantity = 1, initialProduct =
       setIsGeneratingPdf(true);
       const doc = new jsPDF();
       
-      // We will create a clean textual representation for the PDF so it's simple and fast.
       doc.setFont("helvetica", "bold");
       doc.setFontSize(24);
       doc.text("The OVi", 20, 30);
@@ -435,7 +855,7 @@ export default function Checkout({ onBack, initialQuantity = 1, initialProduct =
       doc.text(`Name: ${formData.name}`, 20, 62);
       doc.text(`Phone: +20 ${formData.phone}`, 20, 68);
       if (formData.email) doc.text(`Email: ${formData.email}`, 20, 74);
-      doc.text(`Address: ${getFullAddress()}`, 20, formData.email ? 80 : 74);
+      doc.text(`Address: ${formData.street}, ${formData.city}, ${formData.governorate}`, 20, formData.email ? 80 : 74);
       
       let tableStartY = formData.email ? 90 : 84;
       doc.line(20, tableStartY, 190, tableStartY);
@@ -475,7 +895,6 @@ export default function Checkout({ onBack, initialQuantity = 1, initialProduct =
       doc.setFontSize(9);
       doc.text("This is a preliminary order summary and does not serve as a final receipt of payment.", 30, currentY + 40);
 
-      // Save it out immediately
       const blob = doc.output('blob');
       const url = URL.createObjectURL(blob);
       setPdfUrl(url);
@@ -496,6 +915,116 @@ export default function Checkout({ onBack, initialQuantity = 1, initialProduct =
     }
   };
 
+  // Dry render function for Order Summary Content
+  const renderOrderSummary = (isMobile: boolean) => (
+    <div className={`${isMobile ? '' : 'bg-white border border-brand-border p-6 rounded-lg shadow-sm sticky top-6'}`}>
+      {!isMobile && (
+        <h2 className="text-xl font-bold text-brand-deep border-b border-brand-border pb-3 mb-5 text-right">ملخص الطلب</h2>
+      )}
+      
+      {/* Product Details Row */}
+      <div className="flex items-center gap-4 mb-6 text-right">
+        {/* Product Image */}
+        <div className="w-20 h-20 bg-brand-light flex items-center justify-center p-2 border border-brand-border shrink-0 rounded">
+          <img 
+            src={productType === 'oud' ? "/photos/coco.webp" : "/photos/farawla.webp"} 
+            alt="The OVi" 
+            className="h-full w-full object-contain mix-blend-darken" 
+          />
+        </div>
+        {/* Product Info */}
+        <div className="flex-1 space-y-1">
+          <h3 className="font-bold text-brand-deep font-sans">The OVi (250 ml)</h3>
+          <p className="text-xs text-brand-text/70 font-sans">{productType === 'oud' ? 'OUD & Coconut' : 'Strawberry & Blueberry'}</p>
+          
+          {/* Quantity Selector */}
+          <div className="flex items-center gap-3 pt-2">
+            <button 
+              onClick={() => setQuantity(Math.max(1, quantity - 1))}
+              className="w-6 h-6 flex items-center justify-center border border-brand-border rounded-full hover:bg-brand-light transition-colors cursor-pointer"
+            >
+              <Minus className="w-3 h-3 text-brand-text" />
+            </button>
+            <span className="text-sm font-semibold w-4 text-center font-sans select-none">{quantity}</span>
+            <button 
+              onClick={() => setQuantity(quantity + 1)}
+              className="w-6 h-6 flex items-center justify-center border border-brand-border rounded-full hover:bg-brand-light transition-colors cursor-pointer"
+            >
+              <Plus className="w-3 h-3 text-brand-text" />
+            </button>
+          </div>
+        </div>
+        {/* Single Item Price */}
+        <div className="font-semibold text-brand-deep shrink-0 text-sm">{price} جنيه مصري</div>
+      </div>
+
+      {/* Discount Code Input Box */}
+      <div className="flex mb-5">
+        <input 
+          type="text" 
+          placeholder="كود الخصم" 
+          value={discountCode}
+          onChange={(e) => setDiscountCode(e.target.value)}
+          className="flex-1 border border-brand-border border-l-0 bg-white px-3 py-2 text-sm focus:outline-none focus:border-brand-deep rounded-r text-right font-sans"
+        />
+        <button 
+          onClick={handleApplyDiscount}
+          className="bg-brand-accent1 border border-brand-border text-brand-deep px-4 py-2 text-sm font-semibold hover:bg-brand-accent2 transition-colors rounded-l cursor-pointer"
+        >
+          تطبيق
+        </button>
+      </div>
+
+      {/* Prices breakdown */}
+      <div className="space-y-3 pt-4 border-t border-brand-border text-sm text-right">
+        <div className="flex justify-between">
+          <span className="text-brand-text/70">المجموع الفرعي</span>
+          <span className="text-brand-deep font-semibold font-sans">{subtotal} جنيه مصري</span>
+        </div>
+        {appliedDiscount > 0 && (
+          <div className="flex justify-between text-brand-accent3">
+            <span>الخصم المطبق</span>
+            <span className="font-semibold font-sans">- {appliedDiscount} جنيه مصري</span>
+          </div>
+        )}
+        <div className="flex justify-between">
+          <span className="text-brand-text/70">ضريبة القيمة المضافة</span>
+          <span className="text-brand-deep font-semibold font-sans">EGP {vat} مصري</span>
+        </div>
+        {formData.governorate && (
+          <div className="flex justify-between text-green-600 font-semibold transition-colors">
+            <span>الشحن</span>
+            <span className="font-sans">
+              {shipping === 0 ? 'شحن مجاني' : `EGP ${shipping} مصري`}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Divider line and total price */}
+      <div className="flex justify-between items-center pt-4 mt-4 border-t border-brand-border text-right select-none">
+        <span className="font-bold text-brand-deep text-2xl font-sans">EGP {total}</span>
+        <span className="font-bold text-brand-text text-base">مصري</span>
+      </div>
+
+      {/* Trust badges below total */}
+      <div className="flex justify-around items-center pt-6 mt-6 border-t border-brand-border text-center select-none font-sans">
+        <div className="flex flex-col items-center gap-1">
+          <Shield className="w-5 h-5 text-brand-deep" />
+          <span className="leading-tight font-bold text-[10px] text-brand-text/80">دفع آمن<br />وموثوق</span>
+        </div>
+        <div className="flex flex-col items-center gap-1">
+          <Truck className="w-5 h-5 text-brand-deep" />
+          <span className="leading-tight font-bold text-[10px] text-brand-text/80">الشحن<br />السريع</span>
+        </div>
+        <div className="flex flex-col items-center gap-1">
+          <Lock className="w-5 h-5 text-brand-deep" />
+          <span className="leading-tight font-bold text-[10px] text-brand-text/80">دفع آمن<br />وموثوق</span>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <motion.div 
       initial={{ opacity: 0, y: 50 }}
@@ -503,16 +1032,23 @@ export default function Checkout({ onBack, initialQuantity = 1, initialProduct =
       exit={{ opacity: 0, y: 50 }}
       className="fixed inset-0 z-50 bg-brand-light overflow-y-auto"
     >
-      <div className="max-w-3xl mx-auto px-6 py-12">
+      <div className="max-w-5xl mx-auto px-6 py-12">
+        {/* Back Button */}
         <button 
-          onClick={step === 'form' ? onBack : () => setStep('form')}
-          className="flex items-center gap-2 text-brand-text/70 hover:text-brand-deep transition-colors mb-8"
+          onClick={
+            step === 'form' 
+              ? (formStep === 1 ? onBack : () => setFormStep((formStep - 1) as FormStep))
+              : () => { setStep('form'); setFormStep(3); }
+          }
+          className="flex items-center gap-2 text-brand-text/70 hover:text-brand-deep transition-colors mb-8 cursor-pointer animate-fade-in"
+          dir="rtl"
         >
-          <ArrowLeft className="w-5 h-5" />
-          <span>Back</span>
+          <ArrowLeft className="w-5 h-5 rotate-180" />
+          <span>العودة</span>
         </button>
 
-        <h1 className="font-serif italic text-4xl text-brand-deep mb-8">Secure Checkout</h1>
+        {/* Serif Centered Title */}
+        <h1 className="font-serif italic text-4xl text-center text-brand-deep mb-8 select-none">Secure Checkout</h1>
 
         <AnimatePresence mode="wait">
           {step === 'form' && (
@@ -521,226 +1057,292 @@ export default function Checkout({ onBack, initialQuantity = 1, initialProduct =
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 20 }}
-              className="grid md:grid-cols-2 gap-12"
+              className="space-y-8"
             >
-              {/* Form Section */}
-              <div className="space-y-6">
-                <div>
-                  <h2 className="text-xl font-medium text-brand-deep border-b border-brand-border pb-2 mb-4">Customer Details</h2>
-                  
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm text-brand-text/80 mb-1">Full Name *</label>
-                      <input 
-                        type="text" 
-                        required
-                        value={formData.name}
-                        onChange={(e) => setFormData({...formData, name: e.target.value})}
-                        className="w-full border border-brand-border bg-white px-4 py-2 focus:outline-none focus:border-brand-accent3 transition-colors"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm text-brand-text/80 mb-1">Phone Number (+20) *</label>
-                      <div className="flex">
-                        <span className="inline-flex items-center px-3 border border-r-0 border-brand-border bg-brand-surface text-brand-text/70">
-                          +20
-                        </span>
-                        <input 
-                          type="tel" 
-                          required
-                          value={formData.phone}
-                          onChange={(e) => setFormData({...formData, phone: e.target.value.replace(/\D/g, '')})}
-                          className={`w-full border bg-white px-4 py-2 focus:outline-none transition-colors ${formData.phone && formData.phone.length < 10 ? 'border-red-400 focus:border-red-500' : 'border-brand-border focus:border-brand-accent3'}`}
-                        />
-                      </div>
-                      {formData.phone && formData.phone.length < 10 && (
-                        <p className="text-xs text-red-500 mt-1">Phone number must be at least 10 digits.</p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-sm text-brand-text/80 mb-1">Governorate *</label>
-                      <select 
-                        required
-                        value={formData.governorate}
-                        onChange={(e) => setFormData({...formData, governorate: e.target.value, city: ''})}
-                        className="w-full border border-brand-border bg-white px-4 py-2 focus:outline-none focus:border-brand-accent3 transition-colors"
-                      >
-                        <option value="">Select Governorate</option>
-                        {egyptLocations.map(gov => (
-                          <option key={gov.name} value={gov.name}>{gov.name} ({gov.arabicName})</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm text-brand-text/80 mb-1">City *</label>
-                      <select 
-                        required
-                        disabled={!formData.governorate}
-                        value={formData.city}
-                        onChange={(e) => setFormData({...formData, city: e.target.value})}
-                        className="w-full border border-brand-border bg-white px-4 py-2 focus:outline-none focus:border-brand-accent3 transition-colors disabled:opacity-50"
-                      >
-                        <option value="">Select City</option>
-                        {formData.governorate && egyptLocations.find(g => g.name === formData.governorate)?.cities.map(city => (
-                          <option key={city} value={city}>{city}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm text-brand-text/80 mb-1">Detailed Address (Street, Neighborhood) *</label>
-                      <textarea 
-                        required
-                        rows={2}
-                        value={formData.street}
-                        onChange={(e) => setFormData({...formData, street: e.target.value})}
-                        className="w-full border border-brand-border bg-white px-4 py-2 focus:outline-none focus:border-brand-accent3 transition-colors resize-none"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm text-brand-text/80 mb-1">Email <span className="text-brand-text/50">(Optional)</span></label>
-                      <input 
-                        type="email" 
-                        value={formData.email}
-                        onChange={(e) => setFormData({...formData, email: e.target.value})}
-                        className="w-full border border-brand-border bg-white px-4 py-2 focus:outline-none focus:border-brand-accent3 transition-colors"
-                      />
-                    </div>
+              {/* Progress Bar (١. بيانات العميل, ٢. بيانات الشحن, ٣. الدفع) */}
+              <div className="flex items-center justify-center gap-4 mb-12 max-w-lg mx-auto select-none" dir="rtl">
+                {/* Step 1 */}
+                <div className="flex flex-col items-center">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold text-lg transition-all ${formStep === 1 ? 'bg-brand-deep text-white shadow-md font-sans' : 'border border-brand-accent3/40 text-brand-text/60 bg-white font-sans'}`}>
+                    ١
                   </div>
+                  <span className={`text-xs mt-2 font-medium transition-colors ${formStep === 1 ? 'text-brand-deep font-bold' : 'text-brand-text/50'}`}>١. بيانات العميل</span>
                 </div>
 
-                <div>
-                  <h2 className="text-xl font-medium text-brand-deep border-b border-brand-border pb-2 mb-4">طريقة الدفع (Payment Method)</h2>
-                  <div className="space-y-3">
-                    <label className={`flex items-center gap-3 p-4 border cursor-pointer transition-colors ${paymentMethod === 'instapay' ? 'border-brand-accent3 bg-brand-accent1/20' : 'border-brand-border bg-white'}`}>
-                      <input 
-                        type="radio" 
-                        name="payment" 
-                        checked={paymentMethod === 'instapay'}
-                        onChange={() => setPaymentMethod('instapay')}
-                        className="w-4 h-4 text-brand-accent3 focus:ring-brand-accent3"
-                      />
-                      <img src="/photos/instapay-logo.png" alt="Instapay" className="h-6 w-auto object-contain" />
-                      <span className="font-medium text-brand-text">انستاباي (Instapay)</span>
-                    </label>
+                {/* Arrow */}
+                <div className="flex-1 flex items-center justify-center px-1">
+                  <span className="text-brand-text/30 text-xl font-light">←</span>
+                </div>
 
-                    <label className={`flex items-center gap-3 p-4 border cursor-pointer transition-colors ${paymentMethod === 'cod' ? 'border-brand-accent3 bg-brand-accent1/20' : 'border-brand-border bg-white'}`}>
-                      <input 
-                        type="radio" 
-                        name="payment" 
-                        checked={paymentMethod === 'cod'}
-                        onChange={() => setPaymentMethod('cod')}
-                        className="w-4 h-4 text-brand-accent3 focus:ring-brand-accent3"
-                      />
-                      <img src="/photos/cod-logo.png" alt="Cash on Delivery" className="h-6 w-auto object-contain" />
-                      <span className="font-medium text-brand-text">الدفع عند الاستلام (Cash on Delivery)</span>
-                    </label>
-
-                    <label className="flex items-center gap-3 p-4 border border-brand-border bg-gray-50/50 opacity-60 cursor-not-allowed">
-                      <input 
-                        type="radio" 
-                        name="payment" 
-                        disabled
-                        className="w-4 h-4 text-brand-text/40 focus:ring-brand-text/40 cursor-not-allowed"
-                      />
-                      <CreditCard className="w-5 h-5 text-brand-text/60" />
-                      <span className="font-medium text-brand-text/60">الفيزا والبطاقات البنكية (Soon)</span>
-                    </label>
+                {/* Step 2 */}
+                <div className="flex flex-col items-center">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold text-lg transition-all ${formStep === 2 ? 'bg-brand-deep text-white shadow-md font-sans' : 'border border-brand-accent3/40 text-brand-text/60 bg-white font-sans'}`}>
+                    ٢
                   </div>
+                  <span className={`text-xs mt-2 font-medium transition-colors ${formStep === 2 ? 'text-brand-deep font-bold' : 'text-brand-text/50'}`}>٢. بيانات الشحن</span>
+                </div>
+
+                {/* Arrow */}
+                <div className="flex-1 flex items-center justify-center px-1">
+                  <span className="text-brand-text/30 text-xl font-light">←</span>
+                </div>
+
+                {/* Step 3 */}
+                <div className="flex flex-col items-center">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold text-lg transition-all ${formStep === 3 ? 'bg-brand-deep text-white shadow-md font-sans' : 'border border-brand-accent3/40 text-brand-text/60 bg-white font-sans'}`}>
+                    ٣
+                  </div>
+                  <span className={`text-xs mt-2 font-medium transition-colors ${formStep === 3 ? 'text-brand-deep font-bold' : 'text-brand-text/50'}`}>٣. الدفع</span>
                 </div>
               </div>
 
-              {/* Order Summary Section */}
-              <div>
-                <div className="bg-white border border-brand-border p-6 sticky top-6">
-                  <h2 className="text-xl font-medium text-brand-deep border-b border-brand-border pb-2 mb-4">Order Summary</h2>
-                  
-                  <div className="flex items-center gap-4 mb-6">
-                    <div className="w-16 h-16 bg-brand-light flex items-center justify-center p-2 border border-brand-border shrink-0">
-                       <img src={productType === 'oud' ? "/photos/oud.webp" : "/photos/farawla.webp"} alt="The OVi" className="h-full w-full object-contain mix-blend-darken" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-medium text-brand-deep">The OVi (250 ml)</h3>
-                      <p className="text-sm text-brand-text/70 mb-2">{productType === 'oud' ? 'OUD & Coconut' : 'Strawberry & Blueberry'}</p>
-                      <div className="flex items-center gap-3">
-                        <button 
-                          onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                          className="w-6 h-6 flex items-center justify-center border border-brand-border rounded-full hover:bg-brand-light transition-colors"
-                        >
-                          <Minus className="w-3 h-3" />
-                        </button>
-                        <span className="text-sm font-medium w-4 text-center">{quantity}</span>
-                        <button 
-                          onClick={() => setQuantity(quantity + 1)}
-                          className="w-6 h-6 flex items-center justify-center border border-brand-border rounded-full hover:bg-brand-light transition-colors"
-                        >
-                          <Plus className="w-3 h-3" />
-                        </button>
-                      </div>
-                    </div>
-                    <div className="font-medium text-brand-deep">EGP {subtotal}</div>
+              {/* Mobile Collapsible Summary Bar (shown only on mobile, above forms) */}
+              <div className="block md:hidden border border-brand-border bg-white rounded-lg shadow-sm mb-4 overflow-hidden" dir="rtl">
+                <button
+                  type="button"
+                  onClick={() => setIsMobileSummaryExpanded(!isMobileSummaryExpanded)}
+                  className="w-full flex justify-between items-center px-4 py-3 bg-brand-light hover:bg-brand-accent1/10 transition-colors cursor-pointer select-none"
+                >
+                  <div className="flex items-center gap-2 text-brand-deep font-semibold text-sm">
+                    <span>🛒 {isMobileSummaryExpanded ? 'إخفاء ملخص الطلب' : 'عرض ملخص الطلب'}</span>
+                    <span className="text-[10px] transition-transform duration-200">{isMobileSummaryExpanded ? '▲' : '▼'}</span>
                   </div>
-
-                  <div className="mb-4 flex gap-2">
-                    <input 
-                      type="text" 
-                      placeholder="Discount code" 
-                      value={discountCode}
-                      onChange={(e) => setDiscountCode(e.target.value)}
-                      className="flex-1 border border-brand-border bg-white px-3 py-2 text-sm focus:outline-none focus:border-brand-accent3 transition-colors"
-                    />
-                    <button 
-                      onClick={handleApplyDiscount}
-                      className="bg-brand-surface border border-brand-border text-brand-deep px-4 py-2 text-sm font-medium hover:bg-brand-light transition-colors"
-                    >
-                      Apply
-                    </button>
-                  </div>
-
-                  <div className="space-y-3 pt-4 border-t border-brand-border text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-brand-text/70">Subtotal</span>
-                      <span className="text-brand-deep font-medium">EGP {subtotal}</span>
-                    </div>
-                    {appliedDiscount > 0 && (
-                      <div className="flex justify-between text-brand-accent3">
-                        <span>Discount</span>
-                        <span className="font-medium">- EGP {appliedDiscount}</span>
+                  <div className="text-left">
+                    <div className="font-bold text-brand-deep font-sans text-base">{subtotal} جنيه مصري</div>
+                    {formData.governorate ? (
+                      <div className="text-[11px] font-semibold font-sans mt-0.5" style={{ color: shipping === 0 ? '#16a34a' : '#6b7280' }}>
+                        {shipping === 0 ? '+ شحن مجاني 🎉' : `+ شحن ${shipping} جنيه`}
                       </div>
+                    ) : (
+                      <div className="text-[10px] text-brand-text/40 font-sans mt-0.5">+ مصاريف الشحن عند الاختيار</div>
                     )}
-                    <div className="flex justify-between">
-                      <span className="text-brand-text/70">VAT</span>
-                      <span className="text-brand-deep font-medium">EGP {vat}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-brand-text/70">Shipping</span>
-                      <span className="text-brand-deep font-medium">
-                        {shipping === 0 ? <span className="text-brand-accent3">Free</span> : `EGP ${shipping}`}
-                      </span>
-                    </div>
                   </div>
+                </button>
+                
+                <AnimatePresence>
+                  {isMobileSummaryExpanded && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="border-t border-brand-border p-4 bg-white"
+                    >
+                      {renderOrderSummary(true)}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
 
-                  <div className="flex justify-between items-center pt-4 mt-4 border-t border-brand-border">
-                    <span className="font-medium text-brand-deep text-lg">Total</span>
-                    <span className="font-medium text-brand-accent3 text-xl">EGP {total}</span>
-                  </div>
+              {/* Two Column Grid */}
+              <div className="grid md:grid-cols-12 gap-8 items-start" dir="rtl">
+                {/* Right Column: Step-by-Step Forms */}
+                <div className="md:col-span-7 bg-white border border-brand-border p-8 rounded-lg shadow-sm">
+                  {formStep === 1 && (
+                    <div className="space-y-6">
+                      <div className="border-b border-brand-border pb-3 mb-6">
+                        <h2 className="text-2xl font-bold text-brand-deep">بيانات العميل</h2>
+                      </div>
+                      
+                      <div className="space-y-4 text-right">
+                        <div>
+                          <label className="block text-sm font-semibold text-brand-text mb-1">الاسم بالكامل *</label>
+                          <input 
+                            type="text" 
+                            required
+                            placeholder="الاسم بالكامل"
+                            value={formData.name}
+                            onChange={(e) => setFormData({...formData, name: e.target.value})}
+                            className="w-full border border-brand-border bg-white px-4 py-2.5 rounded focus:outline-none focus:border-brand-deep transition-colors text-right"
+                          />
+                        </div>
 
-                  <button
-                    onClick={handleNext}
-                    disabled={!formData.name || !formData.phone || formData.phone.length < 10 || !formData.street || !formData.city || !formData.governorate}
-                    className="w-full mt-8 bg-brand-deep text-white py-4 font-medium tracking-wide hover:bg-brand-text transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Place Order
-                  </button>
-                  {(!formData.name || !formData.phone || !formData.street || !formData.city || !formData.governorate) ? (
-                     <p className="text-xs text-center text-brand-text/50 mt-2">Please fill in all required fields</p>
-                  ) : formData.phone.length < 10 ? (
-                     <p className="text-xs text-center text-red-500 mt-2">Please enter a valid phone number</p>
-                  ) : null}
+                        <div>
+                          <label className="block text-sm font-semibold text-brand-text mb-1">رقم الهاتف *</label>
+                          <div className="flex mt-1" dir="ltr">
+                            <span className="inline-flex items-center px-3 border border-r-0 border-brand-border bg-brand-surface text-brand-text/70 rounded-l-md font-sans font-medium text-sm">
+                              +20
+                            </span>
+                            <input 
+                              type="tel" 
+                              required
+                              placeholder="أدخل رقم الهاتف"
+                              value={formData.phone}
+                              onChange={(e) => setFormData({...formData, phone: e.target.value.replace(/\D/g, '')})}
+                              className={`w-full border bg-white px-4 py-2.5 rounded-r-md focus:outline-none transition-colors text-left font-sans ${formData.phone && formData.phone.length < 10 ? 'border-red-400 focus:border-red-500' : 'border-brand-border focus:border-brand-deep'}`}
+                            />
+                          </div>
+                          {formData.phone && formData.phone.length < 10 && (
+                            <p className="text-xs text-red-500 mt-1">يجب أن يتكون رقم الهاتف من 10 أرقام على الأقل.</p>
+                          )}
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-semibold text-brand-text mb-1">
+                            البريد الإلكتروني <span className="text-brand-text/50 font-normal">(اختياري)</span>
+                          </label>
+                          <input 
+                            type="email" 
+                            placeholder="مثال: name@domain.com"
+                            value={formData.email}
+                            onChange={(e) => setFormData({...formData, email: e.target.value})}
+                            className="w-full border border-brand-border bg-white px-4 py-2.5 rounded focus:outline-none focus:border-brand-deep transition-colors text-right font-sans"
+                          />
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setFormStep(2)}
+                        disabled={!formData.name.trim() || !formData.phone || formData.phone.length < 10}
+                        className="w-full max-w-sm mx-auto block mt-8 bg-brand-deep text-white py-3.5 rounded-full font-semibold hover:opacity-95 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed text-center cursor-pointer"
+                      >
+                        التالي (شحن) | Next
+                      </button>
+                    </div>
+                  )}
+
+                  {formStep === 2 && (
+                    <div className="space-y-6">
+                      <div className="border-b border-brand-border pb-3 mb-6">
+                        <h2 className="text-2xl font-bold text-brand-deep">بيانات الشحن</h2>
+                      </div>
+                      
+                      <div className="space-y-4 text-right">
+                        <div>
+                          <label className="block text-sm font-semibold text-brand-text mb-1">المحافظة *</label>
+                          <select 
+                            required
+                            value={formData.governorate}
+                            onChange={(e) => setFormData({...formData, governorate: e.target.value, city: ''})}
+                            className="w-full border border-brand-border bg-white px-4 py-2.5 rounded focus:outline-none focus:border-brand-deep transition-colors text-right cursor-pointer"
+                          >
+                            <option value="">اختر المحافظة</option>
+                            {egyptLocations.map(gov => (
+                              <option key={gov.name} value={gov.name}>{gov.arabicName}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-semibold text-brand-text mb-1">المدينة / المنطقة *</label>
+                          <select 
+                            required
+                            disabled={!formData.governorate}
+                            value={formData.city}
+                            onChange={(e) => setFormData({...formData, city: e.target.value})}
+                            className="w-full border border-brand-border bg-white px-4 py-2.5 rounded focus:outline-none focus:border-brand-deep transition-colors text-right disabled:opacity-50 cursor-pointer"
+                          >
+                            <option value="">اختر المدينة / المنطقة</option>
+                            {formData.governorate && egyptLocations.find(g => g.name === formData.governorate)?.cities.map(city => (
+                              <option key={city} value={city}>
+                                {cityTranslations[city] || city}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-semibold text-brand-text mb-1">العنوان بالتفصيل (الشارع، رقم المبنى، الشقة) *</label>
+                          <textarea 
+                            required
+                            rows={3}
+                            placeholder="اكتب تفاصيل العنوان هنا..."
+                            value={formData.street}
+                            onChange={(e) => setFormData({...formData, street: e.target.value})}
+                            className="w-full border border-brand-border bg-white px-4 py-2.5 rounded focus:outline-none focus:border-brand-deep transition-colors resize-none text-right"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="mt-8 space-y-3">
+                        <button
+                          type="button"
+                          onClick={() => setFormStep(3)}
+                          disabled={!formData.governorate || !formData.city || !formData.street.trim()}
+                          className="w-full max-w-sm mx-auto block bg-brand-deep text-white py-3.5 rounded-full font-semibold hover:opacity-95 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed text-center cursor-pointer"
+                        >
+                          التالي (الدفع) | Next
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setFormStep(1)}
+                          className="text-brand-text/60 hover:text-brand-deep text-sm block mx-auto font-medium transition-colors cursor-pointer"
+                        >
+                          رجوع للخطوة السابقة
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {formStep === 3 && (
+                    <div className="space-y-6">
+                      <div className="border-b border-brand-border pb-3 mb-6">
+                        <h2 className="text-2xl font-bold text-brand-deep">طريقة الدفع</h2>
+                      </div>
+                      
+                      <div className="space-y-3 text-right">
+                        <label className={`flex items-center gap-3 p-4 border rounded cursor-pointer transition-colors ${paymentMethod === 'cod' ? 'border-brand-deep bg-brand-accent1/10' : 'border-brand-border bg-white'}`}>
+                          <input 
+                            type="radio" 
+                            name="payment" 
+                            checked={paymentMethod === 'cod'}
+                            onChange={() => setPaymentMethod('cod')}
+                            className="w-4 h-4 text-brand-deep focus:ring-brand-deep accent-brand-deep"
+                          />
+                          <img src="/photos/cod-logo.png" alt="Cash on Delivery" className="h-6 w-auto object-contain" />
+                          <span className="font-semibold text-brand-text">الدفع عند الاستلام (Cash on Delivery)</span>
+                        </label>
+
+                        <label className={`flex items-center gap-3 p-4 border rounded cursor-pointer transition-colors ${paymentMethod === 'paymob' ? 'border-brand-deep bg-brand-accent1/10' : 'border-brand-border bg-white'}`}>
+                          <input 
+                            type="radio" 
+                            name="payment" 
+                            checked={paymentMethod === 'paymob'}
+                            onChange={() => setPaymentMethod('paymob')}
+                            className="w-4 h-4 text-brand-deep focus:ring-brand-deep accent-brand-deep"
+                          />
+                          <CreditCard className={`w-6 h-6 ${paymentMethod === 'paymob' ? 'text-brand-deep' : 'text-brand-text/60'}`} />
+                          <span className="font-semibold text-brand-text">الفيزا والبطاقات البنكية (Paymob)</span>
+                        </label>
+
+                        <label className={`flex items-center gap-3 p-4 border rounded cursor-pointer transition-colors ${paymentMethod === 'instapay' ? 'border-brand-deep bg-brand-accent1/10' : 'border-brand-border bg-white'}`}>
+                          <input 
+                            type="radio" 
+                            name="payment" 
+                            checked={paymentMethod === 'instapay'}
+                            onChange={() => setPaymentMethod('instapay')}
+                            className="w-4 h-4 text-brand-deep focus:ring-brand-deep accent-brand-deep"
+                          />
+                          <img src="/photos/instapay-logo.png" alt="Instapay" className="h-6 w-auto object-contain" />
+                          <span className="font-semibold text-brand-text">انستاباي (Instapay)</span>
+                        </label>
+                      </div>
+
+                      <div className="mt-8 space-y-3">
+                        <button
+                          type="button"
+                          onClick={handleNext}
+                          disabled={isProcessing}
+                          className={`w-full max-w-sm mx-auto flex items-center justify-center gap-2 text-white py-3.5 rounded-full font-semibold hover:opacity-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-center cursor-pointer ${isProcessing ? 'bg-green-600' : 'bg-brand-deep'}`}
+                        >
+                          {isProcessing ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
+                          <span>{isProcessing ? 'جاري اتمام طلبك...' : 'تأكيد الطلب | Place Order'}</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setFormStep(2)}
+                          className="text-brand-text/60 hover:text-brand-deep text-sm block mx-auto font-medium transition-colors cursor-pointer"
+                        >
+                          رجوع للخطوة السابقة
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Left Column: Fixed Vertical Order Summary Box (shown only on desktop) */}
+                <div className="md:col-span-5 hidden md:block">
+                  {renderOrderSummary(false)}
                 </div>
               </div>
             </motion.div>
@@ -753,31 +1355,32 @@ export default function Checkout({ onBack, initialQuantity = 1, initialProduct =
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 20 }}
               className="max-w-md mx-auto text-center"
+              dir="rtl"
             >
-              <h2 className="text-2xl font-serif text-brand-deep mb-4">Complete Payment</h2>
+              <h2 className="text-2xl font-bold text-brand-deep mb-4">إتمام الدفع عبر انستاباي</h2>
               <p className="text-brand-text/80 mb-6 font-light">
-                Please transfer the amount of <strong className="text-brand-deep font-medium">EGP {total}</strong> to our Instapay account using the barcode below.
+                يرجى تحويل مبلغ <strong className="text-brand-deep font-semibold">{total} جنيه مصري</strong> إلى حساب انستاباي الخاص بنا باستخدام الرمز أدناه.
               </p>
               
-              <div className="bg-white border border-brand-border p-4 inline-block mb-8">
+              <div className="bg-white border border-brand-border p-4 inline-block mb-8 rounded shadow-sm">
                 <img 
                   src="https://drive.google.com/thumbnail?id=1G2IgA1jCwHjxAmtcPzvVKD-eSQADjJeZ&sz=w1000" 
                   alt="Instapay Barcode" 
-                  className="w-48 h-auto"
+                  className="w-48 h-auto mx-auto"
                 />
               </div>
 
-              <div className="bg-brand-accent1/30 p-4 border-l-4 border-brand-accent3 text-left mb-8">
-                <p className="text-sm text-brand-text/80 leading-relaxed">
-                  After transferring the amount, please click the button below. We will contact you within 1 hour to confirm your transfer and finalize the order.
+              <div className="bg-brand-accent1/30 p-4 border-r-4 border-brand-deep text-right mb-8 rounded-l">
+                <p className="text-sm text-brand-text/80 leading-relaxed font-medium">
+                  بعد تحويل المبلغ، يرجى الضغط على الزر أدناه. وسنتواصل معك خلال ساعة واحدة لتأكيد التحويل وإتمام الطلب.
                 </p>
               </div>
 
               <button
                 onClick={() => setStep('success')}
-                className="w-full bg-brand-deep text-white py-4 font-medium tracking-wide hover:bg-brand-text transition-colors"
+                className="w-full bg-brand-deep text-white py-4 font-semibold rounded-full hover:opacity-95 transition-opacity cursor-pointer"
               >
-                I have transferred the amount
+                لقد قمت بتحويل المبلغ
               </button>
             </motion.div>
           )}
@@ -803,6 +1406,7 @@ export default function Checkout({ onBack, initialQuantity = 1, initialProduct =
                 handlePrint={handlePrint}
                 invoiceRef={invoiceRef}
                 getFullAddress={getFullAddress}
+                productType={productType}
               />
             </motion.div>
           )}

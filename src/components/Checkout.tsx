@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, CheckCircle, CreditCard, Download, Loader2, Minus, Plus, Shield, Truck, Lock } from 'lucide-react';
+import { ArrowLeft, CheckCircle, CreditCard, Download, Loader2, Minus, Plus, Shield, Truck, Lock, Trash2 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { egyptLocations } from '../data/egyptLocations';
@@ -467,7 +467,7 @@ function SuccessContent({
           <tbody>
             <tr className="border-b border-brand-border">
               <td className="py-4 text-brand-deep">
-                The OVi (250 ml) - {productType === 'oud' ? 'OUD & Coconut' : 'Strawberry & Blueberry'} (x{quantity})
+                {productType === 'oud' ? 'اوفي رائحة العود وجوز الهند (250مل)' : 'اوفي رائحة الفراولة والتوت (250مل)'} (x{quantity})
               </td>
               <td className="py-4 text-brand-deep text-left">{subtotal} جنيه مصري</td>
             </tr>
@@ -544,38 +544,40 @@ export default function Checkout({ onBack, initialQuantity = 1, initialProduct =
   const [productType, setProductType] = useState<'strawberry' | 'oud'>(initialProduct);
   const [discountCode, setDiscountCode] = useState('');
   const [discountRate, setDiscountRate] = useState(0);
+  const [discountError, setDiscountError] = useState('');
   const [isFreeShippingCode, setIsFreeShippingCode] = useState(false);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const invoiceRef = useRef<HTMLDivElement>(null);
   const [isMobileSummaryExpanded, setIsMobileSummaryExpanded] = useState(false);
 
-  const price = productType === 'oud' ? 450 : 350;
+  const unitPrice = productType === 'oud' ? 450 : 350;
+  const unitOldPrice = productType === 'oud' ? 740 : 510;
   
   // Calculate dynamic bundle price
-  let subtotal = price;
+  let subtotal = 0;
+  let oldSubtotal = quantity * unitOldPrice;
+
   if (productType === 'strawberry') {
-    if (quantity === 1) {
-      subtotal = 350;
-    } else if (quantity === 2) {
-      subtotal = 580;
-    } else if (quantity === 3) {
-      subtotal = 810;
-    } else if (quantity > 3) {
-      subtotal = 810 + (quantity - 3) * 270;
+    if (quantity === 1) subtotal = 350;
+    else if (quantity === 2) subtotal = 599;
+    else if (quantity === 3) subtotal = 860;
+    else {
+      const baseFor4Plus = 860 + (quantity - 3) * 286; 
+      subtotal = Math.round(baseFor4Plus * 0.9);
     }
   } else {
     // Oud
-    if (quantity === 1) {
-      subtotal = 450;
-    } else if (quantity === 2) {
-      subtotal = 850;
-    } else if (quantity === 3) {
-      subtotal = 1230;
-    } else if (quantity > 3) {
-      subtotal = 1230 + (quantity - 3) * 410;
+    if (quantity === 1) subtotal = 450;
+    else if (quantity === 2) subtotal = 850;
+    else if (quantity === 3) subtotal = 1230;
+    else {
+      const baseFor4Plus = 1230 + (quantity - 3) * 410;
+      subtotal = Math.round(baseFor4Plus * 0.9);
     }
   }
+
+  const discountPercentage = Math.round(((oldSubtotal - subtotal) / oldSubtotal) * 100);
 
   const appliedDiscount = Math.round(subtotal * discountRate);
 
@@ -605,7 +607,7 @@ export default function Checkout({ onBack, initialQuantity = 1, initialProduct =
           items: [{
             item_id: productType === 'oud' ? 'OVI-BS-002' : 'OVI-BS-001',
             item_name: productType === 'oud' ? 'The OVi Body Splash - OUD & Coconut' : 'The OVi Body Splash - Strawberry & Blueberry',
-            price: price,
+            price: Math.round(subtotal / quantity),
             quantity: quantity
           }]
         });
@@ -637,7 +639,7 @@ export default function Checkout({ onBack, initialQuantity = 1, initialProduct =
             items: [{
               item_id: productType === 'oud' ? 'OVI-BS-002' : 'OVI-BS-001',
               item_name: productType === 'oud' ? 'The OVi Body Splash - OUD & Coconut' : 'The OVi Body Splash - Strawberry & Blueberry',
-              price: price,
+              price: Math.round(subtotal / quantity),
               quantity: quantity
             }]
           });
@@ -655,7 +657,7 @@ export default function Checkout({ onBack, initialQuantity = 1, initialProduct =
               items: [{
                 item_id: productType === 'oud' ? 'OVI-BS-002' : 'OVI-BS-001',
                 item_name: productType === 'oud' ? 'The OVi Body Splash - OUD & Coconut' : 'The OVi Body Splash - Strawberry & Blueberry',
-                price: price,
+                price: Math.round(subtotal / quantity),
                 quantity: quantity
               }]
             }
@@ -676,6 +678,7 @@ export default function Checkout({ onBack, initialQuantity = 1, initialProduct =
   }, [step, orderNumber, total, shipping, quantity]);
 
   const handleApplyDiscount = () => {
+    setDiscountError('');
     if (!discountCode.trim()) return;
     const code = discountCode.trim().toUpperCase();
     if (code === 'OVI2026FREE') {
@@ -690,7 +693,7 @@ export default function Checkout({ onBack, initialQuantity = 1, initialProduct =
     } else {
       setIsFreeShippingCode(false);
       setDiscountRate(0); // Invalid code
-      alert("كود الخصم غير صحيح");
+      setDiscountError("كود الخصم غير صحيح");
     }
   };
 
@@ -707,7 +710,7 @@ export default function Checkout({ onBack, initialQuantity = 1, initialProduct =
     const orderData = {
       orderNumber: generatedOrderNumber,
       timestamp: new Date().toLocaleString('ar-EG', { timeZone: 'Africa/Cairo' }),
-      product: productType === 'oud' ? 'The OVi (250 ml) - OUD & Coconut' : 'The OVi (250 ml) - Strawberry & Blueberry',
+      product: productType === 'oud' ? 'اوفي رائحة العود وجوز الهند (250مل)' : 'اوفي رائحة الفراولة والتوت (250مل)',
       quantity: quantity,
       name: formData.name,
       phone: `+20${formData.phone}`,
@@ -927,15 +930,16 @@ export default function Checkout({ onBack, initialQuantity = 1, initialProduct =
         {/* Product Image */}
         <div className="w-20 h-20 bg-brand-light flex items-center justify-center p-2 border border-brand-border shrink-0 rounded">
           <img 
-            src={productType === 'oud' ? "/photos/coco.webp" : "/photos/farawla.webp"} 
+            src={productType === 'oud' ? "/photos/oud.webp" : "/photos/farawla.webp"} 
             alt="The OVi" 
             className="h-full w-full object-contain mix-blend-darken" 
           />
         </div>
         {/* Product Info */}
         <div className="flex-1 space-y-1">
-          <h3 className="font-bold text-brand-deep font-sans">The OVi (250 ml)</h3>
-          <p className="text-xs text-brand-text/70 font-sans">{productType === 'oud' ? 'OUD & Coconut' : 'Strawberry & Blueberry'}</p>
+          <h3 className="font-bold text-brand-deep font-sans">
+            {productType === 'oud' ? 'اوفي رائحة العود وجوز الهند (250مل)' : 'اوفي رائحة الفراولة والتوت (250مل)'}
+          </h3>
           
           {/* Quantity Selector */}
           <div className="flex items-center gap-3 pt-2">
@@ -955,24 +959,27 @@ export default function Checkout({ onBack, initialQuantity = 1, initialProduct =
           </div>
         </div>
         {/* Single Item Price */}
-        <div className="font-semibold text-brand-deep shrink-0 text-sm">{price} جنيه مصري</div>
+        <div className="font-semibold text-brand-deep shrink-0 text-sm">{subtotal} جنيه مصري</div>
       </div>
 
       {/* Discount Code Input Box */}
-      <div className="flex mb-5">
-        <input 
-          type="text" 
-          placeholder="كود الخصم" 
-          value={discountCode}
-          onChange={(e) => setDiscountCode(e.target.value)}
-          className="flex-1 border border-brand-border border-l-0 bg-white px-3 py-2 text-sm focus:outline-none focus:border-brand-deep rounded-r text-right font-sans"
-        />
-        <button 
-          onClick={handleApplyDiscount}
-          className="bg-brand-accent1 border border-brand-border text-brand-deep px-4 py-2 text-sm font-semibold hover:bg-brand-accent2 transition-colors rounded-l cursor-pointer"
-        >
-          تطبيق
-        </button>
+      <div className="mb-5">
+        <div className="flex">
+          <input 
+            type="text" 
+            placeholder="كود الخصم" 
+            value={discountCode}
+            onChange={(e) => { setDiscountCode(e.target.value); setDiscountError(''); }}
+            className={`flex-1 border border-l-0 bg-white px-3 py-2 text-sm focus:outline-none rounded-r text-right font-sans ${discountError ? 'border-red-500 focus:border-red-500' : 'border-brand-border focus:border-brand-deep'}`}
+          />
+          <button 
+            onClick={handleApplyDiscount}
+            className="bg-brand-accent1 border border-brand-border text-brand-deep px-4 py-2 text-sm font-semibold hover:bg-brand-accent2 transition-colors rounded-l cursor-pointer"
+          >
+            تطبيق
+          </button>
+        </div>
+        {discountError && <p className="text-xs text-red-500 mt-1 text-right">{discountError}</p>}
       </div>
 
       {/* Prices breakdown */}
@@ -1032,7 +1039,7 @@ export default function Checkout({ onBack, initialQuantity = 1, initialProduct =
       exit={{ opacity: 0, y: 50 }}
       className="fixed inset-0 z-50 bg-brand-light overflow-y-auto"
     >
-      <div className="max-w-5xl mx-auto px-6 py-12">
+      <div className="max-w-5xl mx-auto px-4 md:px-6 py-4 md:py-12">
         {/* Back Button */}
         <button 
           onClick={
@@ -1040,7 +1047,7 @@ export default function Checkout({ onBack, initialQuantity = 1, initialProduct =
               ? (formStep === 1 ? onBack : () => setFormStep((formStep - 1) as FormStep))
               : () => { setStep('form'); setFormStep(3); }
           }
-          className="flex items-center gap-2 text-brand-text/70 hover:text-brand-deep transition-colors mb-8 cursor-pointer animate-fade-in"
+          className="flex items-center gap-2 text-brand-text/70 hover:text-brand-deep transition-colors mb-4 md:mb-8 cursor-pointer animate-fade-in"
           dir="rtl"
         >
           <ArrowLeft className="w-5 h-5 rotate-180" />
@@ -1048,7 +1055,7 @@ export default function Checkout({ onBack, initialQuantity = 1, initialProduct =
         </button>
 
         {/* Serif Centered Title */}
-        <h1 className="font-serif italic text-4xl text-center text-brand-deep mb-8 select-none">Secure Checkout</h1>
+        <h1 className="font-serif italic text-2xl md:text-4xl text-center text-brand-deep mb-4 md:mb-8 select-none">Secure Checkout</h1>
 
         <AnimatePresence mode="wait">
           {step === 'form' && (
@@ -1057,88 +1064,140 @@ export default function Checkout({ onBack, initialQuantity = 1, initialProduct =
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 20 }}
-              className="space-y-8"
+              className="space-y-4 md:space-y-8"
             >
               {/* Progress Bar (١. بيانات العميل, ٢. بيانات الشحن, ٣. الدفع) */}
-              <div className="flex items-center justify-center gap-4 mb-12 max-w-lg mx-auto select-none" dir="rtl">
+              <div className="flex items-center justify-center gap-2 md:gap-4 mb-4 md:mb-12 max-w-lg mx-auto select-none" dir="rtl">
                 {/* Step 1 */}
                 <div className="flex flex-col items-center">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold text-lg transition-all ${formStep === 1 ? 'bg-brand-deep text-white shadow-md font-sans' : 'border border-brand-accent3/40 text-brand-text/60 bg-white font-sans'}`}>
+                  <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center font-semibold text-sm md:text-lg transition-all ${formStep === 1 ? 'bg-brand-deep text-white shadow-md font-sans' : 'border border-brand-accent3/40 text-brand-text/60 bg-white font-sans'}`}>
                     ١
                   </div>
-                  <span className={`text-xs mt-2 font-medium transition-colors ${formStep === 1 ? 'text-brand-deep font-bold' : 'text-brand-text/50'}`}>١. بيانات العميل</span>
+                  <span className={`text-[10px] md:text-xs mt-1 md:mt-2 font-medium transition-colors ${formStep === 1 ? 'text-brand-deep font-bold' : 'text-brand-text/50'}`}>١. بيانات العميل</span>
                 </div>
 
                 {/* Arrow */}
                 <div className="flex-1 flex items-center justify-center px-1">
-                  <span className="text-brand-text/30 text-xl font-light">←</span>
+                  <span className="text-brand-text/30 text-base md:text-xl font-light">←</span>
                 </div>
 
                 {/* Step 2 */}
                 <div className="flex flex-col items-center">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold text-lg transition-all ${formStep === 2 ? 'bg-brand-deep text-white shadow-md font-sans' : 'border border-brand-accent3/40 text-brand-text/60 bg-white font-sans'}`}>
+                  <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center font-semibold text-sm md:text-lg transition-all ${formStep === 2 ? 'bg-brand-deep text-white shadow-md font-sans' : 'border border-brand-accent3/40 text-brand-text/60 bg-white font-sans'}`}>
                     ٢
                   </div>
-                  <span className={`text-xs mt-2 font-medium transition-colors ${formStep === 2 ? 'text-brand-deep font-bold' : 'text-brand-text/50'}`}>٢. بيانات الشحن</span>
+                  <span className={`text-[10px] md:text-xs mt-1 md:mt-2 font-medium transition-colors ${formStep === 2 ? 'text-brand-deep font-bold' : 'text-brand-text/50'}`}>٢. بيانات الشحن</span>
                 </div>
 
                 {/* Arrow */}
                 <div className="flex-1 flex items-center justify-center px-1">
-                  <span className="text-brand-text/30 text-xl font-light">←</span>
+                  <span className="text-brand-text/30 text-base md:text-xl font-light">←</span>
                 </div>
 
                 {/* Step 3 */}
                 <div className="flex flex-col items-center">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold text-lg transition-all ${formStep === 3 ? 'bg-brand-deep text-white shadow-md font-sans' : 'border border-brand-accent3/40 text-brand-text/60 bg-white font-sans'}`}>
+                  <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center font-semibold text-sm md:text-lg transition-all ${formStep === 3 ? 'bg-brand-deep text-white shadow-md font-sans' : 'border border-brand-accent3/40 text-brand-text/60 bg-white font-sans'}`}>
                     ٣
                   </div>
-                  <span className={`text-xs mt-2 font-medium transition-colors ${formStep === 3 ? 'text-brand-deep font-bold' : 'text-brand-text/50'}`}>٣. الدفع</span>
+                  <span className={`text-[10px] md:text-xs mt-1 md:mt-2 font-medium transition-colors ${formStep === 3 ? 'text-brand-deep font-bold' : 'text-brand-text/50'}`}>٣. الدفع</span>
                 </div>
               </div>
 
-              {/* Mobile Collapsible Summary Bar (shown only on mobile, above forms) */}
-              <div className="block md:hidden border border-brand-border bg-white rounded-lg shadow-sm mb-4 overflow-hidden" dir="rtl">
-                <button
-                  type="button"
-                  onClick={() => setIsMobileSummaryExpanded(!isMobileSummaryExpanded)}
-                  className="w-full flex justify-between items-center px-4 py-3 bg-brand-light hover:bg-brand-accent1/10 transition-colors cursor-pointer select-none"
-                >
-                  <div className="flex items-center gap-2 text-brand-deep font-semibold text-sm">
-                    <span>🛒 {isMobileSummaryExpanded ? 'إخفاء ملخص الطلب' : 'عرض ملخص الطلب'}</span>
-                    <span className="text-[10px] transition-transform duration-200">{isMobileSummaryExpanded ? '▲' : '▼'}</span>
+              {/* Mobile Collapsible Summary Bar (shown only on mobile, above forms, hidden on Step 3) */}
+              {/* Mobile Static Summary Bar for Step 2 */}
+              {formStep === 2 && (
+                <div className="block md:hidden border border-brand-border bg-white rounded-lg shadow-sm mb-4 p-4 text-right" dir="rtl">
+                  <div className="flex justify-between items-center">
+                    <span className="font-bold text-brand-deep text-xs">إجمالي الطلب الحالي</span>
+                    <span className="font-bold text-brand-deep font-sans text-sm">{total} جنيه مصري</span>
                   </div>
-                  <div className="text-left">
-                    <div className="font-bold text-brand-deep font-sans text-base">{subtotal} جنيه مصري</div>
-                    {formData.governorate ? (
-                      <div className="text-[11px] font-semibold font-sans mt-0.5" style={{ color: shipping === 0 ? '#16a34a' : '#6b7280' }}>
-                        {shipping === 0 ? '+ شحن مجاني 🎉' : `+ شحن ${shipping} جنيه`}
-                      </div>
-                    ) : (
-                      <div className="text-[10px] text-brand-text/40 font-sans mt-0.5">+ مصاريف الشحن عند الاختيار</div>
-                    )}
-                  </div>
-                </button>
-                
-                <AnimatePresence>
-                  {isMobileSummaryExpanded && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      className="border-t border-brand-border p-4 bg-white"
-                    >
-                      {renderOrderSummary(true)}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+                </div>
+              )}
 
               {/* Two Column Grid */}
               <div className="grid md:grid-cols-12 gap-8 items-start" dir="rtl">
                 {/* Right Column: Step-by-Step Forms */}
-                <div className="md:col-span-7 bg-white border border-brand-border p-8 rounded-lg shadow-sm">
+                <div className="md:col-span-7 bg-white border border-brand-border p-4 md:p-8 rounded-lg shadow-sm">
                   {formStep === 1 && (
-                    <div className="space-y-6">
+                    <div className="space-y-4 md:space-y-6">
+                      {/* Mobile Noon-Style Product Card (Mobile only) */}
+                      <div className="block md:hidden border border-brand-border bg-white rounded-xl p-4 shadow-sm mb-4" dir="rtl">
+                        <div className="flex gap-4">
+                          {/* Image and Qty Selector Column */}
+                          <div className="flex flex-col items-center gap-3 shrink-0">
+                            <div className="w-20 h-24 bg-brand-light flex items-center justify-center p-2 border border-brand-border/60 rounded-lg">
+                              <img 
+                                src={productType === 'oud' ? "/photos/oud.webp" : "/photos/farawla.webp"} 
+                                alt="The OVi" 
+                                className="h-full w-full object-contain mix-blend-darken" 
+                              />
+                            </div>
+                            {/* Noon Style Quantity Selector */}
+                            <div className="flex items-center border border-brand-border/80 rounded-lg bg-white overflow-hidden shadow-sm h-8">
+                              <button 
+                                onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                                className="px-2.5 h-full flex items-center justify-center hover:bg-brand-light text-brand-text/80 transition-colors cursor-pointer"
+                              >
+                                {quantity === 1 ? <Trash2 className="w-3.5 h-3.5 text-red-500" /> : <Minus className="w-3 h-3" />}
+                              </button>
+                              <span className="px-3 text-sm font-bold text-brand-deep font-sans">{quantity}</span>
+                              <button 
+                                onClick={() => setQuantity(quantity + 1)}
+                                className="px-2.5 h-full flex items-center justify-center hover:bg-brand-light text-brand-text/85 transition-colors cursor-pointer"
+                              >
+                                <Plus className="w-3 h-3" />
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Product Details Column */}
+                          <div className="flex-1 flex flex-col justify-between text-right">
+                            <div className="space-y-1">
+                              <span className="text-[10px] text-brand-text/60 font-semibold uppercase tracking-wider">Market</span>
+                              <h3 className="font-bold text-sm text-brand-deep leading-tight">
+                                {productType === 'oud' ? 'اوفي رائحة العود وجوز الهند (250مل)' : 'اوفي رائحة الفراولة والتوت (250مل)'}
+                              </h3>
+                            </div>
+
+                            <div className="space-y-1">
+                              <div className="flex items-baseline gap-2 flex-wrap">
+                                <span className="text-sm font-bold text-brand-deep font-sans">EGP {subtotal.toFixed(2)}</span>
+                                <span className="text-xs text-brand-text/40 line-through font-sans">{oldSubtotal.toFixed(2)}</span>
+                                <span className="text-xs text-green-600 font-bold font-sans">{discountPercentage}% OFF</span>
+                              </div>
+                              <p className="text-[10px] text-brand-text/60 font-medium">التوصيل خلال يومين إلى ٣ أيام عمل 🚚</p>
+                              <p className="text-[9px] text-brand-text/40">غير قابل للإرجاع أو الاستبدال</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Mobile Coupon Input (Mobile only, right under the Noon-style card) */}
+                      <div className="block md:hidden border border-brand-border bg-white rounded-lg p-3 shadow-sm mb-4" dir="rtl">
+                        <label className="block text-xs font-semibold text-brand-text mb-1.5">كوبون الخصم</label>
+                        <div className="flex">
+                          <input 
+                            type="text" 
+                            placeholder="أدخل كود الخصم هنا" 
+                            value={discountCode}
+                            onChange={(e) => { setDiscountCode(e.target.value); setDiscountError(''); }}
+                            className={`flex-1 border border-l-0 bg-white px-3 py-1.5 text-xs focus:outline-none rounded-r text-right font-sans ${discountError ? 'border-red-500 focus:border-red-500' : 'border-brand-border focus:border-brand-deep'}`}
+                          />
+                          <button 
+                            onClick={handleApplyDiscount}
+                            className="bg-brand-accent1 border border-brand-border text-brand-deep px-4 py-1.5 text-xs font-semibold hover:bg-brand-accent2 transition-colors rounded-l cursor-pointer"
+                          >
+                            تطبيق
+                          </button>
+                        </div>
+                        {discountError && <p className="text-[10px] text-red-500 mt-1 text-right">{discountError}</p>}
+                        {appliedDiscount > 0 && !discountError && (
+                          <p className="text-[10px] text-green-600 font-bold mt-1 text-right">
+                            تم تطبيق الخصم بنجاح! تم توفير {appliedDiscount} جنيه 🎉
+                          </p>
+                        )}
+                      </div>
+
                       <div className="border-b border-brand-border pb-3 mb-6">
                         <h2 className="text-2xl font-bold text-brand-deep">بيانات العميل</h2>
                       </div>
@@ -1275,13 +1334,37 @@ export default function Checkout({ onBack, initialQuantity = 1, initialProduct =
                   )}
 
                   {formStep === 3 && (
-                    <div className="space-y-6">
-                      <div className="border-b border-brand-border pb-3 mb-6">
-                        <h2 className="text-2xl font-bold text-brand-deep">طريقة الدفع</h2>
+                    <div className="space-y-4 md:space-y-6">
+                      {/* Mobile Compact Order Summary (Directly shown, not hidden) */}
+                      <div className="block md:hidden bg-brand-light/50 border border-brand-border/60 p-3 rounded-lg text-right mb-2" dir="rtl">
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="text-xs font-bold text-brand-deep">ملخص الطلب:</span>
+                          <span className="text-xs text-brand-text font-sans font-medium">
+                            {productType === 'oud' ? 'اوفي رائحة العود وجوز الهند' : 'اوفي رائحة الفراولة والتوت'} (x{quantity})
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center text-xs text-brand-text/75 mb-0.5">
+                          <span>الشحن إلى {egyptLocations.find(g => g.name === formData.governorate)?.arabicName || formData.governorate}:</span>
+                          <span className="font-semibold font-sans">{shipping === 0 ? 'شحن مجاني' : `${shipping} جنيه`}</span>
+                        </div>
+                        {appliedDiscount > 0 && (
+                          <div className="flex justify-between items-center text-xs text-brand-accent3 mb-0.5">
+                            <span>الخصم المطبق ({discountCode.trim().toUpperCase()}):</span>
+                            <span className="font-semibold font-sans">- {appliedDiscount} جنيه</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between items-center border-t border-brand-border/40 pt-1.5 mt-1 font-bold text-brand-deep">
+                          <span className="text-xs">الإجمالي المطلوب دفعه:</span>
+                          <span className="text-sm font-sans">{total} جنيه مصري</span>
+                        </div>
+                      </div>
+
+                      <div className="border-b border-brand-border pb-2 mb-2 md:mb-6">
+                        <h2 className="text-lg md:text-2xl font-bold text-brand-deep">طريقة الدفع</h2>
                       </div>
                       
-                      <div className="space-y-3 text-right">
-                        <label className={`flex items-center gap-3 p-4 border rounded cursor-pointer transition-colors ${paymentMethod === 'cod' ? 'border-brand-deep bg-brand-accent1/10' : 'border-brand-border bg-white'}`}>
+                      <div className="space-y-2 md:space-y-3 text-right">
+                        <label className={`flex items-center gap-3 p-2.5 md:p-4 border rounded cursor-pointer transition-colors ${paymentMethod === 'cod' ? 'border-brand-deep bg-brand-accent1/10' : 'border-brand-border bg-white'}`}>
                           <input 
                             type="radio" 
                             name="payment" 
@@ -1289,11 +1372,11 @@ export default function Checkout({ onBack, initialQuantity = 1, initialProduct =
                             onChange={() => setPaymentMethod('cod')}
                             className="w-4 h-4 text-brand-deep focus:ring-brand-deep accent-brand-deep"
                           />
-                          <img src="/photos/cod-logo.png" alt="Cash on Delivery" className="h-6 w-auto object-contain" />
-                          <span className="font-semibold text-brand-text">الدفع عند الاستلام (Cash on Delivery)</span>
+                          <img src="/photos/cod-logo.png" alt="Cash on Delivery" className="h-5 md:h-6 w-auto object-contain" />
+                          <span className="font-semibold text-xs md:text-sm text-brand-text">الدفع عند الاستلام (Cash on Delivery)</span>
                         </label>
 
-                        <label className={`flex items-center gap-3 p-4 border rounded cursor-pointer transition-colors ${paymentMethod === 'paymob' ? 'border-brand-deep bg-brand-accent1/10' : 'border-brand-border bg-white'}`}>
+                        <label className={`flex items-center gap-3 p-2.5 md:p-4 border rounded cursor-pointer transition-colors ${paymentMethod === 'paymob' ? 'border-brand-deep bg-brand-accent1/10' : 'border-brand-border bg-white'}`}>
                           <input 
                             type="radio" 
                             name="payment" 
@@ -1301,11 +1384,11 @@ export default function Checkout({ onBack, initialQuantity = 1, initialProduct =
                             onChange={() => setPaymentMethod('paymob')}
                             className="w-4 h-4 text-brand-deep focus:ring-brand-deep accent-brand-deep"
                           />
-                          <CreditCard className={`w-6 h-6 ${paymentMethod === 'paymob' ? 'text-brand-deep' : 'text-brand-text/60'}`} />
-                          <span className="font-semibold text-brand-text">الفيزا والبطاقات البنكية (Paymob)</span>
+                          <CreditCard className={`w-5 h-5 md:w-6 md:h-6 ${paymentMethod === 'paymob' ? 'text-brand-deep' : 'text-brand-text/60'}`} />
+                          <span className="font-semibold text-xs md:text-sm text-brand-text">الفيزا والبطاقات البنكية (Paymob)</span>
                         </label>
 
-                        <label className={`flex items-center gap-3 p-4 border rounded cursor-pointer transition-colors ${paymentMethod === 'instapay' ? 'border-brand-deep bg-brand-accent1/10' : 'border-brand-border bg-white'}`}>
+                        <label className={`flex items-center gap-3 p-2.5 md:p-4 border rounded cursor-pointer transition-colors ${paymentMethod === 'instapay' ? 'border-brand-deep bg-brand-accent1/10' : 'border-brand-border bg-white'}`}>
                           <input 
                             type="radio" 
                             name="payment" 
@@ -1313,17 +1396,17 @@ export default function Checkout({ onBack, initialQuantity = 1, initialProduct =
                             onChange={() => setPaymentMethod('instapay')}
                             className="w-4 h-4 text-brand-deep focus:ring-brand-deep accent-brand-deep"
                           />
-                          <img src="/photos/instapay-logo.png" alt="Instapay" className="h-6 w-auto object-contain" />
-                          <span className="font-semibold text-brand-text">انستاباي (Instapay)</span>
+                          <img src="/photos/instapay-logo.png" alt="Instapay" className="h-5 md:h-6 w-auto object-contain" />
+                          <span className="font-semibold text-xs md:text-sm text-brand-text">انستاباي (Instapay)</span>
                         </label>
                       </div>
 
-                      <div className="mt-8 space-y-3">
+                      <div className="mt-4 md:mt-8 space-y-2 md:space-y-3">
                         <button
                           type="button"
                           onClick={handleNext}
                           disabled={isProcessing}
-                          className={`w-full max-w-sm mx-auto flex items-center justify-center gap-2 text-white py-3.5 rounded-full font-semibold hover:opacity-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-center cursor-pointer ${isProcessing ? 'bg-green-600' : 'bg-brand-deep'}`}
+                          className={`w-full max-w-sm mx-auto flex items-center justify-center gap-2 text-white py-2.5 md:py-3.5 rounded-full font-semibold hover:opacity-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-center cursor-pointer ${isProcessing ? 'bg-green-600' : 'bg-brand-deep'}`}
                         >
                           {isProcessing ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
                           <span>{isProcessing ? 'جاري اتمام طلبك...' : 'تأكيد الطلب | Place Order'}</span>
@@ -1331,7 +1414,7 @@ export default function Checkout({ onBack, initialQuantity = 1, initialProduct =
                         <button
                           type="button"
                           onClick={() => setFormStep(2)}
-                          className="text-brand-text/60 hover:text-brand-deep text-sm block mx-auto font-medium transition-colors cursor-pointer"
+                          className="text-brand-text/60 hover:text-brand-deep text-xs md:text-sm block mx-auto font-medium transition-colors cursor-pointer"
                         >
                           رجوع للخطوة السابقة
                         </button>

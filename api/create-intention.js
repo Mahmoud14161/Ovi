@@ -4,7 +4,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { amount, currency = 'EGP', items, billing_data } = req.body;
+    const { amount, currency = 'EGP', items, billing_data, special_reference } = req.body;
 
     const response = await fetch('https://accept.paymob.com/v1/intention/', {
       method: 'POST',
@@ -29,7 +29,7 @@ export default async function handler(req, res) {
           city: "Cairo",
           country: "EG"
         },
-        special_reference: `ORD-${Date.now()}`
+        special_reference: special_reference || `ORD-${Date.now()}`
       }),
     });
 

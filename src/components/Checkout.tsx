@@ -793,19 +793,14 @@ export default function Checkout({ onBack, initialQuantity = 1, initialProduct =
       setIsProcessing(false);
     } else if (paymentMethod === 'paymob') {
       try {
-        const secretPart1 = "egy_sk_test_5c9dacbcf82";
-        const secretPart2 = "545428802562ad0b1d14e3647b177f25d7b195aec86426d6e4ae9";
-        const secretKey = (import.meta as any).env.VITE_PAYMOB_SECRET_KEY || (secretPart1 + secretPart2);
-        const response = await fetch('https://accept.paymob.com/v1/intention/', {
+        const response = await fetch('/api/create-intention', {
           method: 'POST',
           headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': `Token ${secretKey}`
+            'Content-Type': 'application/json'
           },
           body: JSON.stringify({
             amount: (total * 100).toString(),
             currency: 'EGP',
-            payment_methods: [5721981],
             items: [],
             billing_data: {
               first_name: formData.name.split(' ')[0] || "NA",

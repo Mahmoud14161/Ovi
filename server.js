@@ -14,7 +14,7 @@ app.use(express.json());
 // Paymob Intention API Endpoint
 app.post('/api/create-intention', async (req, res) => {
   try {
-    const { amount, currency = 'EGP', items, billing_data } = req.body;
+    const { amount, currency = 'EGP', items, billing_data, special_reference } = req.body;
 
     const response = await fetch('https://accept.paymob.com/v1/intention/', {
       method: 'POST',
@@ -39,7 +39,7 @@ app.post('/api/create-intention', async (req, res) => {
           city: "Cairo",
           country: "EG"
         },
-        special_reference: `ORD-${Date.now()}`
+        special_reference: special_reference || `ORD-${Date.now()}`
       }),
     });
 

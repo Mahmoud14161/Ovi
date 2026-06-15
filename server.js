@@ -25,7 +25,7 @@ app.post('/api/create-intention', async (req, res) => {
       body: JSON.stringify({
         amount,
         currency,
-        payment_methods: [5721981],
+        payment_methods: [5565798],
         items: items || [],
         billing_data: billing_data || {
           first_name: "Test",

@@ -99,9 +99,12 @@ export default function Footer() {
           </div>
 
           {/* Copyright */}
-          <p className="text-sm font-light text-brand-surface/70 text-center lg:text-right">
-            &copy; {new Date().getFullYear()} The OVi. All rights reserved.
-          </p>
+          <div className="text-sm font-light text-brand-surface/70 text-center lg:text-right flex flex-col gap-1.5">
+            <p>&copy; {new Date().getFullYear()} The OVi. All rights reserved.</p>
+            <p>
+              Website designed by <a href="https://medestra.me/" target="_blank" rel="noopener noreferrer" className="font-medium hover:text-brand-accent1 transition-colors duration-200">Medestra &reg;</a>
+            </p>
+          </div>
         </div>
       </div>
     </footer>
